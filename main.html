@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>Document</title>
+<style>
+* {
+    padding: 0;
+    margin: 0;
+}
+</style>
+</head>
+<body>
+    
+
+<canvas id="canvas" style="background-color: #eee">
+
+</canvas>
+
+
+<script src="./dist/bundle.js"></script>
+<script>
+
+const prender = P2.default;
+
+const p = new prender(document.getElementById("canvas"), {
+    width: 'fullWidth',
+    height: 500
+});
+
+const rect = new p.shapes.rectangle({
+    pin: [20, 20],
+    edge: [30, 40],
+    fill: true,
+    rotate: 60,
+    color: 'red'
+});
+
+const tri = new p.shapes.triangle({
+    pin: [100, 100],
+    edge: 40,
+    rotate: 45,
+    color: 'green'
+});
+
+const c = new p.shapes.circle({
+    pin: [100, 200],
+    radius: 30,
+    fill: true,
+    color: 'blue'
+});
+
+const group = new p.shapes.group();
+
+const cu = new p.shapes.custom({
+    pin: [10, 10],
+    color: 'red'
+});
+
+
+// group.append(rect);
+// group.append(tri);
+// group.append(c);
+
+// p.append(group);
+
+p.append(cu);
+
+// c.x(200);
+
+// rect.x(400);
+
+// tri.x(150).rotate(0).fill(false);
+
+
+
+console.log('图形数量:' + p.getShapesCount());
+
+</script>
+</body>
+</html>
