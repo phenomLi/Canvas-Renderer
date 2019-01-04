@@ -1,4 +1,9 @@
 
+class lineConfig {
+    pin: Array<number>;
+    color: string;
+    fill: boolean;
+}
 
 
 export class line {
@@ -8,22 +13,23 @@ export class line {
     color: string;
     fill: boolean;
 
-    constructor(ctx: CanvasRenderingContext2D) {
-        this.ctx = ctx;
-    }
+    constructor() {}
 
-    start(pin: Array<number>, color: string, fill: boolean) {
-        this.arcX = pin[0];
-        this.arcY = pin[1];
-        this.color = color;
-        this.fill = fill;
+    start(ctx: CanvasRenderingContext2D, config: lineConfig): line {
+        this.ctx = ctx;
+        this.arcX = config.pin[0];
+        this.arcY = config.pin[1];
+        this.color = config.color;
+        this.fill = config.fill;
 
         this.ctx.save();
 
-        this.ctx.fillStyle = color;
-        this.ctx.strokeStyle = color;
+        this.ctx.fillStyle = this.color;
+        this.ctx.strokeStyle = this.color;
         this.ctx.beginPath();
         this.ctx.moveTo(this.arcX, this.arcY);
+
+        return this;
     }
 
     bee(path: Array<Array<number>>): line {
@@ -38,7 +44,14 @@ export class line {
     }
 
     arc(radius: number, startDeg: number, endDeg: number): line {
-        this.ctx.arc(this.arcX, this.arcY, radius, startDeg, endDeg, false);
+        let deg = startDeg - endDeg;
+
+        this.ctx.arc(this.arcX, this.arcY, radius, startDeg/180*Math.PI, endDeg/180*Math.PI, false);
+
+        //this.ctx.moveTo(radius*);
+
+        //console.log('x:' + radius*Math.cos(90/180*Math.PI) + ', y:' + radius*Math.sin(deg/180*Math.PI));
+
         return this;
     }
 

@@ -5,8 +5,8 @@ import { broadcast } from './../render/core';
 class compositeConfig {
     pin: Array<number>;
 
-    mounted() {};
-    removed() {};
+    mounted: Function;
+    removed: Function;
 }
 
 
@@ -27,8 +27,8 @@ export class composite {
         this._x = config.pin[0];
         this._y = config.pin[1];
 
-        this._mounted = config.mounted;
-        this._removed = config.removed;
+        this._mounted = config? config.mounted: () => {};
+        this._removed = config? config.removed: () => {};
     }
 
     id() {
@@ -39,8 +39,9 @@ export class composite {
         return this._type;
     }   
 
-    config() {
+    config(): compositeConfig {
         return {
+            pin: [this._x, this._y],
             mounted: this._mounted,
             removed: this._removed
         }

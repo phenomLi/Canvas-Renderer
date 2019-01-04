@@ -80,7 +80,7 @@ export class shapeHeap {
 
     public clone(shape: shape | group): shape | group {
         if(shape instanceof group) {
-            let g = new shapes.group(g.config());
+            let g = new shapes.group(shape.config());
 
             DFS(shape.getShapeList(), item => {
                 g.append(this.clone(item));

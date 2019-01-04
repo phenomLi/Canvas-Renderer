@@ -3,8 +3,8 @@ import { broadcast } from './../render/core';
 
 
 class groupConfig {
-    mounted() {};
-    removed() {};
+    mounted: Function;
+    removed: Function;
 }
 
 
@@ -22,8 +22,8 @@ export class group {
         this._id = Symbol();
         this._type = 'group';
         this._isMount = false;
-        this._mounted = config.mounted;
-        this._removed = config.removed;
+        this._mounted = config? config.mounted: () => {};
+        this._removed = config? config.removed: () => {};
 
         this.count = 0;
         this.shapeList = new Array();
@@ -37,7 +37,7 @@ export class group {
         return this._type;
     }
 
-    config() {
+    config(): groupConfig {
         return {
             mounted: this._mounted,
             removed: this._removed

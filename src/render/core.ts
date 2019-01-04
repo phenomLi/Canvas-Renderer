@@ -5,6 +5,8 @@ import { triangle } from './../shape/triangle';
 import { circle } from './../shape/circle';
 import { rectangle } from './../shape/rectangle';
 import { group } from './../shape/group';
+import { composite } from './../shape/composite';
+import { line } from '../shape/line';
 
 
 // 广播器
@@ -57,7 +59,9 @@ export const shapes = {
     circle,
     rectangle,
     triangle,
-    group
+    group,
+    composite,
+    line: new line()
 }
 
 
