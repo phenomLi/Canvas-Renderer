@@ -1,5 +1,5 @@
-import { shape, shapeConfig } from './baseShape';
-import { broadcast } from './../render/core';
+import { shape, base } from './baseShape';
+import { broadcast } from '../render/util';
 
 
 class groupConfig {
@@ -8,34 +8,17 @@ class groupConfig {
 }
 
 
-export class group {
-    private _id: symbol;
-    private _type: string;
-    private _isMount: boolean;
-    private _mounted: Function;
-    private _removed: Function;
-
+export class group extends base {
     private count: number;
     private shapeList: Array<shape | group>;
 
     constructor(config: groupConfig) {
-        this._id = Symbol();
-        this._type = 'group';
-        this._isMount = false;
-        this._mounted = config? config.mounted: () => {};
-        this._removed = config? config.removed: () => {};
-
+        super(config, 'group');
+        
         this.count = 0;
         this.shapeList = new Array();
     }
 
-    id() {
-        return this._id;
-    }
-
-    type(): string {
-        return this._type;
-    }
 
     config(): groupConfig {
         return {
@@ -46,15 +29,6 @@ export class group {
 
     getCount(): number {
         return this.count;
-    }
-
-    isMount(isMount?: boolean): boolean {
-        if(isMount !== undefined && typeof isMount === 'boolean') {
-            this._isMount = isMount;
-        }
-        else {
-            return this._isMount;
-        }
     }
 
 
@@ -82,16 +56,6 @@ export class group {
         shape instanceof group? this.count -= shape.getCount(): this.count -= 1;
 
         this._isMount && broadcast.notify();
-    }
-
-
-    /** 钩子函数 */
-    mounted() {
-        this._mounted && typeof this._mounted === 'function' && this._mounted();
-    }
-
-    removed() {
-        this._removed && typeof this._removed === 'function' && this._removed();
     }
 }
 

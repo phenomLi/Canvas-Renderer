@@ -55,24 +55,36 @@ const c = new p.shapes.circle({
 const group = new p.shapes.group();
 
 const cu = new p.shapes.custom({
-    pin: [10, 10],
-    color: 'red'
+    pin: [200, 200],
+    color: 'green',
+    draw(ctx, line) {
+        line
+        .start([0, 30])
+        .bee([[0, 130]])
+        .arc(30, 180, 90)
+        .bee([[130, 160]])
+        .arc(30, 90, 0)
+        .bee([[160, 30]])
+        .arc(30, 0, -90)
+        .bee([[30, 0]])
+        .arc(30, -90, -180)
+        .end();
+    }
 });
 
 
-// group.append(rect);
-// group.append(tri);
-// group.append(c);
+group.append(rect);
+group.append(tri);
+group.append(c);
+group.append(cu);
 
-// p.append(group);
+p.append(group);
 
-p.append(cu);
+//group.show(false);
 
-// c.x(200);
+cu.x(250).y(300);
 
-// rect.x(400);
-
-// tri.x(150).rotate(0).fill(false);
+console.log(cu.show());
 
 
 

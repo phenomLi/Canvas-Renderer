@@ -1,5 +1,5 @@
 import { shape, shapeConfig } from './baseShape';
-import { broadcast, rotate } from './../render/core';
+import { broadcast, rotate } from '../render/util';
 
 
 class rectangleConfig extends shapeConfig {
@@ -13,9 +13,8 @@ export class rectangle extends shape {
     private _height: number;
 
     constructor(config: rectangleConfig) {
-        super(config);
+        super(config, 'rectangle');
 
-        this._type = 'rectangle';
         this._width = config.edge[0];
         this._height = config.edge[1];
     }

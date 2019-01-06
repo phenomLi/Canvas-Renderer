@@ -1,5 +1,5 @@
 import { shape, shapeConfig } from './baseShape';
-import { broadcast, rotate } from './../render/core';
+import { broadcast, rotate } from '../render/util';
 
 
 class triangleConfig extends shapeConfig {
@@ -12,9 +12,8 @@ export class triangle extends shape {
     private _edge: number;
 
     constructor(config: triangleConfig) {
-        super(config);
+        super(config, 'triangle');
 
-        this._type = 'triangle';
         this._edge = config.edge;
     }
 

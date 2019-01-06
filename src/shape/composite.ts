@@ -1,5 +1,5 @@
-import { shape } from './baseShape';
-import { broadcast } from './../render/core';
+import { shape, base } from './baseShape';
+import { broadcast } from '../render/util';
 
 
 class compositeConfig {
@@ -10,34 +10,16 @@ class compositeConfig {
 }
 
 
-export class composite {
+export class composite extends base {
     private _x: number;
     private _y: number;
-    private _id: symbol;
-    private _type: string;
-    private _isMount: boolean;
-    private _mounted: Function;
-    private _removed: Function;
 
     constructor(config: compositeConfig) {
-        this._id = Symbol();
-        this._type = 'composite';
-        this._isMount = false;
+        super(config, 'composite');
 
         this._x = config.pin[0];
         this._y = config.pin[1];
-
-        this._mounted = config? config.mounted: () => {};
-        this._removed = config? config.removed: () => {};
-    }
-
-    id() {
-        return this._id;
-    }
-
-    type(): string {
-        return this._type;
-    }   
+    } 
 
     config(): compositeConfig {
         return {
@@ -47,14 +29,6 @@ export class composite {
         }
     }
 
-    isMount(isMount?: boolean): boolean {
-        if(isMount !== undefined && typeof isMount === 'boolean') {
-            this._isMount = isMount;
-        }
-        else {
-            return this._isMount;
-        }
-    }
 
     x(x?: number): number | composite {
         if(x !== undefined && typeof x === 'number') {
@@ -82,14 +56,5 @@ export class composite {
     join(shape: shape) {
         
     }
-
-
-    /** 钩子函数 */
-    mounted() {
-        this._mounted && typeof this._mounted === 'function' && this._mounted();
-    }
-
-    removed() {
-        this._removed && typeof this._removed === 'function' && this._removed();
-    }
+    
 }

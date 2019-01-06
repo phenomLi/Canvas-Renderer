@@ -1,5 +1,5 @@
 import { event } from './../event/event';
-import { broadcast } from './../render/core';
+import { broadcast } from '../render/util';
 
 export class shapeConfig {
     // 位置
@@ -26,45 +26,36 @@ export class shapeConfig {
 
 
 
-// 图形基类
-export class shape {
+export class base {
     protected _id: symbol;
     protected _type: string;
+    protected _isShow: boolean;
     protected _isMount: boolean;
-    protected _x: number;
-    protected _y: number;
-    protected _color: string;
-    protected _fill: boolean;
-    protected _rotate: number;
 
     protected _mounted: Function;
     protected _removed: Function;
 
-    protected ctx: CanvasRenderingContext2D;
-
-    constructor(config: shapeConfig) {
+    constructor(config: any, type: string) {
         this._id = Symbol();
+        this._type = type;
+        this._isShow = true;
         this._isMount = false;
-        this._x = config.pin[0];
-        this._y = config.pin[1];
-        this._color = config.color;
-        this._fill = (config.fill === undefined)? true: config.fill;
-        this._rotate = config.rotate || 0;
 
-        this._mounted = config.mounted;
-        this._removed = config.removed;
+        this._mounted = config !== undefined? config.mounted: () => {};
+        this._removed = config !== undefined? config.removed: () => {};
     }
-
-    /** 基本属性 */
-
+    
+    // 元素id
     id() {
         return this._id;
     }
-
+    
+    // 元素类型
     type(): string {
         return this._type;
     }
 
+    // 是否挂载到画布上
     isMount(isMount?: boolean): boolean {
         if(isMount !== undefined && typeof isMount === 'boolean') {
             this._isMount = isMount;
@@ -73,6 +64,56 @@ export class shape {
             return this._isMount;
         }
     }
+
+    // 显示、不显示
+    show(isShow?: boolean): boolean | base {
+        if(isShow !== undefined && typeof isShow === 'boolean') {
+            this._isShow = isShow;
+            this._isMount && broadcast.notify();
+            return this;
+        }
+        else {
+            return this._isShow;
+        }
+    }
+
+    // 需重载函数
+    config() {};
+
+    /** 钩子 */
+
+    mounted() {
+        this._mounted && typeof this._mounted === 'function' && this._mounted();
+    }
+
+    removed() {
+        this._removed && typeof this._removed === 'function' && this._removed();
+    }
+}
+
+
+
+// 图形基类
+export class shape extends base {
+    protected _x: number;
+    protected _y: number;
+    protected _color: string;
+    protected _fill: boolean;
+    protected _rotate: number;
+
+    protected ctx: CanvasRenderingContext2D;
+
+    constructor(config: shapeConfig, type: string) {
+        super(config, type);
+
+        this._x = config.pin[0];
+        this._y = config.pin[1];
+        this._color = config.color;
+        this._fill = (config.fill === undefined)? true: config.fill;
+        this._rotate = config.rotate || 0;
+    }
+
+    /** 基本属性 */
 
     x(x?: number): number | shape {
         if(x !== undefined && typeof x === 'number') {
@@ -129,8 +170,6 @@ export class shape {
         }
     }
 
-    // 需重载函数
-    config() {};
 
     // 获取基本属性
     protected getBaseConfig() {
@@ -141,8 +180,6 @@ export class shape {
             rotate: this._rotate
         };
     }
-
-
 
 
     /** 事件 */
@@ -164,17 +201,6 @@ export class shape {
 
     end(fn: Function) {
 
-    }
-
-
-    /** 钩子 */
-
-    mounted() {
-        this._mounted && typeof this._mounted === 'function' && this._mounted();
-    }
-
-    removed() {
-        this._removed && typeof this._removed === 'function' && this._removed();
     }
 
 

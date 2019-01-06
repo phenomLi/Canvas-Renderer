@@ -1,8 +1,8 @@
 import { shape } from './shape/baseShape';
 import { shapes } from './render/core';
 import { group } from './shape/group';
-import { shapeHeap } from './render/shapeHeap';
-import { broadcast } from './render/core';
+import { shapeHeap } from './render/core';
+import { broadcast } from './render/util';
 
 
 /* ------------------------------------------------------------------------------------------ */

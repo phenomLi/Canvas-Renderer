@@ -1,5 +1,6 @@
 import { shape, shapeConfig } from './baseShape';
-import { broadcast } from './../render/core';
+import { line } from './line';
+import { broadcast } from '../render/util';
 
 class customConfig extends shapeConfig {
     pin: Array<number>;
@@ -14,9 +15,8 @@ export class custom extends shape {
     private _draw: Function;
 
     constructor(config: customConfig) {
-        super(config);
+        super(config, 'custom');
 
-        this._type = 'custom';
         this._x = config.pin[0];
         this._y = config.pin[1];
         this._draw = config.draw;
@@ -30,6 +30,6 @@ export class custom extends shape {
     }
 
     draw(ctx: CanvasRenderingContext2D) {
-        this._draw(ctx);
+        this._draw(ctx, line.init(ctx, this));
     }
 }

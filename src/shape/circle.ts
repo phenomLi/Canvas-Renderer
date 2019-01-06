@@ -1,5 +1,5 @@
 import { shape, shapeConfig } from './baseShape';
-import { broadcast } from './../render/core';
+import { broadcast } from '../render/util';
 
 
 
@@ -13,9 +13,8 @@ export class circle extends shape {
     private _radius: number; 
 
     constructor(config: circleConfig) {
-        super(config);
+        super(config, 'circle');
 
-        this._type = 'circle';
         this._radius = config.radius;
     }
 

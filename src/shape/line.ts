@@ -1,63 +1,78 @@
+import { shape } from './baseShape';
 
-class lineConfig {
+
+class LineConfig {
     pin: Array<number>;
     color: string;
     fill: boolean;
 }
 
 
-export class line {
+class Line {
     ctx: CanvasRenderingContext2D;
-    arcX: number;
-    arcY: number;
+    oX: number;
+    oY: number;
+    endX: number;
+    endY: number;
     color: string;
     fill: boolean;
 
     constructor() {}
 
-    start(ctx: CanvasRenderingContext2D, config: lineConfig): line {
+    init(ctx: CanvasRenderingContext2D, shape: shape): Line {
         this.ctx = ctx;
-        this.arcX = config.pin[0];
-        this.arcY = config.pin[1];
-        this.color = config.color;
-        this.fill = config.fill;
+        this.oX = <number>shape.x();
+        this.oY = <number>shape.y();
+        this.color = <string>shape.color();
+        this.fill = <boolean>shape.fill();
 
-        this.ctx.save();
+        return this;
+    }
+
+    start(pin: Array<number>): Line {
+        this.endX = pin[0];
+        this.endY = pin[1];
+        
+        this.ctx.translate(this.oX, this.oY);
 
         this.ctx.fillStyle = this.color;
         this.ctx.strokeStyle = this.color;
         this.ctx.beginPath();
-        this.ctx.moveTo(this.arcX, this.arcY);
+        this.ctx.moveTo(this.endX, this.endY);
 
         return this;
     }
 
-    bee(path: Array<Array<number>>): line {
+    bee(path: Array<Array<number>>): Line {
         for(let i = 0; i < path.length; i ++) {
             this.ctx.lineTo(path[i][0], path[i][1]);
         }
 
-        this.arcX = path[path.length - 1][0];
-        this.arcY = path[path.length - 1][1];
+        this.endX = path[path.length - 1][0];
+        this.endY = path[path.length - 1][1];
 
         return this;
     }
 
-    arc(radius: number, startDeg: number, endDeg: number): line {
-        let deg = startDeg - endDeg;
+    arc(radius: number, startDeg: number, endDeg: number, clockWise: boolean = true): Line {
+        let xCenter: number, yCenter: number;
 
-        this.ctx.arc(this.arcX, this.arcY, radius, startDeg/180*Math.PI, endDeg/180*Math.PI, false);
+        // 将弧的圆心进行位移，确保直线的末尾端点跟弧的开始端点可以衔接
+        xCenter = this.endX - radius*Math.cos((360 - startDeg)/180*Math.PI);
+        yCenter = this.endY + radius*Math.sin((360 - startDeg)/180*Math.PI);
 
-        //this.ctx.moveTo(radius*);
+        this.ctx.arc(xCenter, yCenter, radius, (startDeg)/180*Math.PI, endDeg/180*Math.PI, clockWise);
 
-        //console.log('x:' + radius*Math.cos(90/180*Math.PI) + ', y:' + radius*Math.sin(deg/180*Math.PI));
+        // 将弧的圆心进行位移，确保弧的末尾端点和下一段直线的开端可以衔接
+        this.endX = xCenter - radius*Math.cos((360 - endDeg)/180*Math.PI);
+        this.endY = yCenter + radius*Math.sin((360 - endDeg)/180*Math.PI);
 
         return this;
     }
 
     end() {
         this.fill? this.ctx.fill(): this.ctx.stroke();
-
-        this.ctx.restore();
     } 
 }
+
+export const line = new Line();
