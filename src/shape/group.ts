@@ -1,5 +1,6 @@
-import { shape, base } from './baseShape';
-import { broadcast } from '../render/util';
+import { base } from './baseShape';
+import { broadcast, DFS } from '../render/util';
+import { ShapeType } from './../render/core';
 
 
 class groupConfig {
@@ -9,8 +10,7 @@ class groupConfig {
 
 
 export class group extends base {
-    private count: number;
-    private shapeList: Array<shape | group>;
+    private shapeList: Array<ShapeType>;
 
     constructor(config: groupConfig) {
         super(config, 'group');
@@ -19,7 +19,6 @@ export class group extends base {
         this.shapeList = new Array();
     }
 
-
     config(): groupConfig {
         return {
             mounted: this._mounted,
@@ -27,24 +26,19 @@ export class group extends base {
         }
     }
 
-    getCount(): number {
-        return this.count;
-    }
-
-
-    getShapeList(): Array<shape | group> {
+    getShapeList(): Array<ShapeType> {
         return this.shapeList;
     }
 
-    append(shape: shape | group) {
+    append(shape: ShapeType) {
         this.shapeList.push(shape);
         
-        shape instanceof group? this.count += shape.getCount(): this.count += 1;
+        shape.type() === 'group'? this.count += (<group>shape).getCount(): this.count += 1;
 
         this._isMount && broadcast.notify();
     }
 
-    remove(shape: shape | group) {
+    remove(shape: ShapeType) {
         let id = shape.id();
 
         this.shapeList.map((item, index) => {
@@ -53,9 +47,29 @@ export class group extends base {
             }
         });
 
-        shape instanceof group? this.count -= shape.getCount(): this.count -= 1;
+        shape.type() === 'group'? this.count -= (<group>shape).getCount(): this.count -= 1;
 
         this._isMount && broadcast.notify();
+    }
+
+    
+    render(ctx: CanvasRenderingContext2D, shapeList: Array<ShapeType>) {
+        shapeList.map(item => {
+            if(!item.show()) return; 
+
+            if(item.type() === 'group') {
+                this.render(ctx, (<group>item).getShapeList());
+            }
+            else {
+                ctx.save();
+                item.draw(ctx);
+                ctx.restore();
+            }
+        });
+    }
+
+    draw(ctx: CanvasRenderingContext2D) {
+        this.render(ctx, this.shapeList);
     }
 }
 

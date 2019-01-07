@@ -30,33 +30,12 @@ const p = new prender(document.getElementById("canvas"), {
     height: 500
 });
 
-const rect = new p.shapes.rectangle({
-    pin: [20, 20],
-    edge: [30, 40],
-    fill: true,
-    rotate: 60,
-    color: 'red'
-});
-
-const tri = new p.shapes.triangle({
-    pin: [100, 100],
-    edge: 40,
-    rotate: 45,
-    color: 'green'
-});
-
-const c = new p.shapes.circle({
-    pin: [100, 200],
-    radius: 30,
-    fill: true,
-    color: 'blue'
-});
-
-const group = new p.shapes.group();
 
 const cu = new p.shapes.custom({
     pin: [200, 200],
+    center: [280, 280],
     color: 'green',
+    rotate: 45,
     draw(ctx, line) {
         line
         .start([0, 30])
@@ -73,20 +52,38 @@ const cu = new p.shapes.custom({
 });
 
 
-group.append(rect);
-group.append(tri);
-group.append(c);
-group.append(cu);
+const s1 = new p.shapes.rectangle({
+    pin: [50, 50],
+    edge: [90, 120],
+    fill: true,
+    color: 'blue'
+});
 
-p.append(group);
+const s2 = new p.shapes.rectangle({
+    pin: [140, 50],
+    edge: [120, 90],
+    fill: true,
+    color: 'orange'
+});
 
-//group.show(false);
 
-cu.x(250).y(300);
+const c = new p.shapes.composite({
+    pin: [50, 50],
+    center: [155, 85],
+    rotate: 45
+});
 
-console.log(cu.show());
+c.join(s1);
+c.join(s2);
 
 
+p.append(c);
+p.append(cu);
+
+c.x(60).y(80);
+
+s1.y(60);
+s2.x(200);
 
 console.log('图形数量:' + p.getShapesCount());
 

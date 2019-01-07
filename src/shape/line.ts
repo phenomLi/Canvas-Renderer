@@ -43,6 +43,7 @@ class Line {
         return this;
     }
 
+    // 直线
     bee(path: Array<Array<number>>): Line {
         for(let i = 0; i < path.length; i ++) {
             this.ctx.lineTo(path[i][0], path[i][1]);
@@ -54,6 +55,14 @@ class Line {
         return this;
     }
 
+    // 贝塞尔曲线
+    bez(ctrlPoint1: Array<number>, ctrlPoint2: Array<number>, endPoint: Array<number>) {
+        this.ctx.moveTo(this.endX, this.endY);
+        this.ctx.bezierCurveTo(ctrlPoint1[0], ctrlPoint1[1], ctrlPoint2[0], ctrlPoint2[1], endPoint[0], endPoint[1]);
+        this.endX = endPoint[0]; this.endY = endPoint[1];
+    }
+
+    // 弧线
     arc(radius: number, startDeg: number, endDeg: number, clockWise: boolean = true): Line {
         let xCenter: number, yCenter: number;
 

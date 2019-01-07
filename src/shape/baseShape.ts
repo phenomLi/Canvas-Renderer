@@ -1,5 +1,6 @@
 import { event } from './../event/event';
-import { broadcast } from '../render/util';
+import { broadcast, DFS } from '../render/util';
+import { ShapeType } from './../render/core';
 
 export class shapeConfig {
     // 位置
@@ -35,11 +36,14 @@ export class base {
     protected _mounted: Function;
     protected _removed: Function;
 
+    protected count;
+
     constructor(config: any, type: string) {
         this._id = Symbol();
         this._type = type;
         this._isShow = true;
         this._isMount = false;
+        this.count = 1;
 
         this._mounted = config !== undefined? config.mounted: () => {};
         this._removed = config !== undefined? config.removed: () => {};
@@ -59,6 +63,16 @@ export class base {
     isMount(isMount?: boolean): boolean {
         if(isMount !== undefined && typeof isMount === 'boolean') {
             this._isMount = isMount;
+            // 更改挂载状态后执行钩子函数
+            isMount? this.mounted(): this.removed();
+
+            if(this.type() === 'group' || this.type() === 'composite') {
+                DFS(this.getShapeList(), item => {
+                    item.isMount(isMount);
+                    // 从画布中移除后执行钩子函数
+                    isMount? item.mounted(): item.removed();
+                });
+            }
         }
         else {
             return this._isMount;
@@ -69,6 +83,13 @@ export class base {
     show(isShow?: boolean): boolean | base {
         if(isShow !== undefined && typeof isShow === 'boolean') {
             this._isShow = isShow;
+
+            if(this.type() === 'group' || this.type() === 'composite') {
+                DFS(this.getShapeList(), item => {
+                    item.show(isShow);
+                });
+            }
+
             this._isMount && broadcast.notify();
             return this;
         }
@@ -76,12 +97,19 @@ export class base {
             return this._isShow;
         }
     }
+    
+    // 需重载函数: 返回图形数组(只有group和composite有该方法)
+    getShapeList(): Array<ShapeType> { return null; }
 
-    // 需重载函数
+    // 需重载函数: 返回配置项
     config() {};
 
-    /** 钩子 */
+    // 返回图形数量
+    getCount(): number {
+        return this.count;
+    }
 
+    /** 钩子 */
     mounted() {
         this._mounted && typeof this._mounted === 'function' && this._mounted();
     }
@@ -89,6 +117,9 @@ export class base {
     removed() {
         this._removed && typeof this._removed === 'function' && this._removed();
     }
+
+    /** 渲染(需重载) */
+    draw(ctx: CanvasRenderingContext2D) {}
 }
 
 
@@ -112,6 +143,7 @@ export class shape extends base {
         this._fill = (config.fill === undefined)? true: config.fill;
         this._rotate = config.rotate || 0;
     }
+
 
     /** 基本属性 */
 
@@ -170,7 +202,6 @@ export class shape extends base {
         }
     }
 
-
     // 获取基本属性
     protected getBaseConfig() {
         return {
@@ -202,8 +233,4 @@ export class shape extends base {
     end(fn: Function) {
 
     }
-
-
-    /** 渲染(需重载) */
-    draw(ctx: CanvasRenderingContext2D) {}
 }

@@ -1,5 +1,5 @@
 import { shape } from './shape/baseShape';
-import { shapes } from './render/core';
+import { shapes, ShapeType } from './render/core';
 import { group } from './shape/group';
 import { shapeHeap } from './render/core';
 import { broadcast } from './render/util';
@@ -60,14 +60,12 @@ class initCanvasStyle {
 
 
 class init {
-    private canvasEle: HTMLCanvasElement;
     private canvasStyle: initCanvasStyle;
     private ctx: CanvasRenderingContext2D;
     private shapeHeap: shapeHeap;
     public shapes;
 
     constructor(canvasEle: HTMLCanvasElement, config: canvasConfig) {
-        this.canvasEle = canvasEle;
         this.ctx = canvasEle.getContext('2d');
 
         // 设置canvas基本样式
@@ -99,11 +97,16 @@ class init {
         return this.shapeHeap.getCount();
     }
 
-    public append(shape: shape | group): void {
-        this.shapeHeap.append(shape);
+    public append(shape: ShapeType| Array<ShapeType>): void {
+        if(shape instanceof Array) {
+            shape.map(item => this.shapeHeap.append(item));
+        }
+        else {
+            this.shapeHeap.append(shape);
+        }
     }
 
-    public remove(shape: shape | group): void {
+    public remove(shape: ShapeType): void {
         this.shapeHeap.remove(shape);
     }
 
@@ -111,7 +114,7 @@ class init {
         this.shapeHeap.clear();
     }
 
-    public clone(shape: shape | group): shape | group {
+    public clone(shape: ShapeType): ShapeType {
         return this.shapeHeap.clone(shape);
     }
 

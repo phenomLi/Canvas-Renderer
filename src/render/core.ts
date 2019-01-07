@@ -6,9 +6,12 @@ import { circle } from '../shape/circle';
 import { rectangle } from '../shape/rectangle';
 import { group } from '../shape/group';
 import { composite } from '../shape/composite';
-import { line } from '../shape/line';
 
  
+// 图形类
+export type ShapeType = shape | group | composite;
+
+
 class canvasInfo {
     width: number;
     height: number;
@@ -21,7 +24,7 @@ export class shapeHeap {
     private count: number;
     private canvasInfo: canvasInfo; 
     private ctx: CanvasRenderingContext2D;
-    private shapeHeapArray: Array<shape | group> = new Array();
+    private shapeHeapArray: Array<ShapeType> = new Array();
 
     constructor(ctx: CanvasRenderingContext2D, canvasInfo: canvasInfo) {
         this.count = 0;
@@ -33,67 +36,52 @@ export class shapeHeap {
         return this.count;
     }
 
-    public append(shape: shape | group) {
+    public append(shape: ShapeType) {
         this.shapeHeapArray.push(shape);
+
+        // 更改图形isMounted状态
         shape.isMount(true);
-
-        // 渲染到画布后执行钩子函数
-        shape.mounted();
-
-        if(shape instanceof group) {
-            DFS(shape.getShapeList(), item => {
-                item.isMount(true);
-                // 渲染到画布后执行钩子函数
-                item.mounted();
-            });
-
-            this.count += shape.getCount();
-        }
-        else {
-            this.count += 1;
-        }
-
+        // 更新画布中图形数量
+        this.count += shape.getCount();
+       
         broadcast.notify();
     }
 
-    public remove(shape: shape | group) {
+    public remove(shape: ShapeType) {
         let id = shape.id();
-
+        // 将要remove的图形在shapeHeapArray中去除
         this.shapeHeapArray.map((item, index) => {
             if(item.id() === id) {
                 this.shapeHeapArray.splice(index, 1);
             }
         });
 
+        // 更改图形isMounted状态
         shape.isMount(false);
-        // 从画布中移除后执行钩子函数
-        shape.removed();
-
-        if(shape instanceof group) {
-            DFS(shape.getShapeList(), item => {
-                item.isMount(false);
-                // 从画布中移除后执行钩子函数
-                item.removed();
-            });
-
-            this.count -= shape.getCount();
-        }
-        else {
-            this.count -= 1;
-        }
-
+        // 更新画布中图形数量
+        this.count -= shape.getCount();
+        
         broadcast.notify();
     }
 
-    public clone(shape: shape | group): shape | group {
-        if(shape instanceof group) {
-            let g = new shapes.group(shape.config());
+    public clone(shape: ShapeType): ShapeType {
+        if(shape.type() === 'group') {
+            let tempGroup = new shapes.group((<group>shape).config());
 
-            DFS(shape.getShapeList(), item => {
-                g.append(this.clone(item));
+            DFS((<group>shape).getShapeList(), item => {
+                tempGroup.append(this.clone(item));
             });
 
-            return g;
+            return tempGroup;
+        }
+        else if(shape.type() === 'composite') {
+            let tempComposite = new shapes.composite((<composite>shape).config());
+
+            DFS((<composite>shape).getShapeList(), item => {
+                tempComposite.join(<shape | composite>this.clone(item));
+            });
+
+            return tempComposite;
         }
         else {
             return new shapes[shape.type()](shape.config());
@@ -112,25 +100,16 @@ export class shapeHeap {
 
     public reRender() {
         this.ctx.clearRect(0, 0, this.canvasInfo.width, this.canvasInfo.height);
-        this.render(this.shapeHeapArray);
-    }
 
-    protected render(shapeList: Array<shape | group>) {
-        shapeList.map(item => {
+        this.shapeHeapArray.map(item => {
             if(!item.show()) return; 
 
-            if(item instanceof group) {
-                this.render(item.getShapeList());
-            }
-            else {
-                this.ctx.save();
-                item.draw(this.ctx);
-                this.ctx.restore();
-            }
+            this.ctx.save();
+            item.draw(this.ctx);
+            this.ctx.restore();
         });
     }
 }
-
 
 
 
