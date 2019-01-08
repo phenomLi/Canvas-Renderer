@@ -1,5 +1,5 @@
-import { shape, shapeConfig } from './baseShape';
-import { broadcast } from '../render/util';
+import { Shape, shapeConfig } from './BaseShape';
+import Broadcast from './../Broadcast/Broadcast';
 
 
 
@@ -9,7 +9,7 @@ class circleConfig extends shapeConfig {
 
 
 //绘制圆形
-export class circle extends shape {
+export class Circle extends Shape {
     private _radius: number; 
 
     constructor(config: circleConfig) {
@@ -18,10 +18,10 @@ export class circle extends shape {
         this._radius = config.radius;
     }
 
-    radius(r?: number): number | shape {
+    radius(r?: number): number | Shape {
         if(r !== undefined && typeof r === 'number') {
             this._radius = r;
-            this._isMount && broadcast.notify();
+            this._isMount && Broadcast.notify('update');
             return this;
         }
         else {

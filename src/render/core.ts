@@ -1,15 +1,16 @@
-import { broadcast, DFS } from './util';
-import { shape } from '../shape/baseShape';
-import { custom } from '../shape/custom';
-import { triangle } from '../shape/triangle';
-import { circle } from '../shape/circle';
-import { rectangle } from '../shape/rectangle';
-import { group } from '../shape/group';
-import { composite } from '../shape/composite';
+import { DFS, isInShape } from './util';
+import Broadcast from './../Broadcast/Broadcast';
+import { Shape } from '../shape/BaseShape';
+import { Custom } from '../shape/Custom';
+import { Triangle } from '../shape/Triangle';
+import { Circle } from '../shape/Circle';
+import { Rectangle } from '../shape/Rectangle';
+import { Group } from '../shape/Group';
+import { Composite } from '../shape/Composite';
 
  
 // 图形类
-export type ShapeType = shape | group | composite;
+export type ShapeType = Shape | Group | Composite;
 
 
 class canvasInfo {
@@ -22,14 +23,23 @@ class canvasInfo {
 export class shapeHeap {
     // 图形个数
     private count: number;
+    // canvas信息（长宽）
     private canvasInfo: canvasInfo; 
+    // canvas上下文对象
     private ctx: CanvasRenderingContext2D;
+    // 图形堆数组
     private shapeHeapArray: Array<ShapeType> = new Array();
+    // 异步更新请求次数
+    private aSyncUpdateRequestCount: number;
+    // 更新请求次数
+    private updateRequestCount: number;
 
     constructor(ctx: CanvasRenderingContext2D, canvasInfo: canvasInfo) {
         this.count = 0;
         this.ctx = ctx;
         this.canvasInfo = canvasInfo;
+        this.aSyncUpdateRequestCount = 0;
+        this.updateRequestCount = 0;
     }
 
     public getCount(): number {
@@ -43,8 +53,8 @@ export class shapeHeap {
         shape.isMount(true);
         // 更新画布中图形数量
         this.count += shape.getCount();
-       
-        broadcast.notify();
+
+        Broadcast.notify('update');
     }
 
     public remove(shape: ShapeType) {
@@ -60,25 +70,25 @@ export class shapeHeap {
         shape.isMount(false);
         // 更新画布中图形数量
         this.count -= shape.getCount();
-        
-        broadcast.notify();
+
+        Broadcast.notify('update');
     }
 
     public clone(shape: ShapeType): ShapeType {
         if(shape.type() === 'group') {
-            let tempGroup = new shapes.group((<group>shape).config());
+            let tempGroup = new shapes.Group((<Group>shape).config());
 
-            DFS((<group>shape).getShapeList(), item => {
+            DFS((<Group>shape).getShapeList(), item => {
                 tempGroup.append(this.clone(item));
             });
 
             return tempGroup;
         }
         else if(shape.type() === 'composite') {
-            let tempComposite = new shapes.composite((<composite>shape).config());
+            let tempComposite = new shapes.Composite((<Composite>shape).config());
 
-            DFS((<composite>shape).getShapeList(), item => {
-                tempComposite.join(<shape | composite>this.clone(item));
+            DFS((<Composite>shape).getShapeList(), item => {
+                tempComposite.join(<Shape | Composite>this.clone(item));
             });
 
             return tempComposite;
@@ -98,6 +108,23 @@ export class shapeHeap {
         this.ctx.clearRect(0, 0, this.canvasInfo.width, this.canvasInfo.height);
     }
 
+    /** 更新画布 */
+    public update() {
+        this.updateRequestCount++;
+
+        // 异步更新
+        setTimeout(function() {
+            this.aSyncUpdateRequestCount++;
+
+            if(this.aSyncUpdateRequestCount === this.updateRequestCount) {
+                console.log('申请更新次数：' + this.notifyCount);
+
+                this.updateRequestCount = this.aSyncUpdateRequestCount = 0;
+                this.reRender();
+            }
+        }.bind(this), 0);
+    }
+
     public reRender() {
         this.ctx.clearRect(0, 0, this.canvasInfo.width, this.canvasInfo.height);
 
@@ -115,12 +142,17 @@ export class shapeHeap {
 
 // 图形元素集合
 export const shapes = {
-    custom,
-    circle,
-    rectangle,
-    triangle,
-    group,
-    composite
+    Custom,
+    Circle,
+    Rectangle,
+    Triangle,
+    Group,
+    Composite
+}
+
+// 实用函数集合
+export const utils = {
+    isInShape,
 }
 
 

@@ -1,5 +1,6 @@
-import { shape, shapeConfig } from './baseShape';
-import { broadcast, rotate } from '../render/util';
+import { Shape, shapeConfig } from './BaseShape';
+import { rotate } from '../render/util';
+import Broadcast from './../Broadcast/Broadcast';
 
 
 class rectangleConfig extends shapeConfig {
@@ -8,7 +9,7 @@ class rectangleConfig extends shapeConfig {
 
 
 //绘制矩形
-export class rectangle extends shape {
+export class Rectangle extends Shape {
     private _width: number;
     private _height: number;
 
@@ -26,10 +27,10 @@ export class rectangle extends shape {
         };
     }
 
-    width(width?: number): number | shape {
+    width(width?: number): number | Shape {
         if(width !== undefined && typeof width === 'number') {
             this._width = width;
-            this._isMount && broadcast.notify();
+            this._isMount && Broadcast.notify('update');
             return this;
         }
         else {
@@ -37,10 +38,10 @@ export class rectangle extends shape {
         }
     }
 
-    height(height?: number): number | shape {
+    height(height?: number): number | Shape {
         if(height !== undefined && typeof height === 'number') {
             this._height = height;
-            this._isMount && broadcast.notify();
+            this._isMount && Broadcast.notify('update');
             return this;
         }
         else {

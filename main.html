@@ -31,7 +31,7 @@ const p = new prender(document.getElementById("canvas"), {
 });
 
 
-const cu = new p.shapes.custom({
+const cu = new p.shapes.Custom({
     pin: [200, 200],
     center: [280, 280],
     color: 'green',
@@ -52,14 +52,14 @@ const cu = new p.shapes.custom({
 });
 
 
-const s1 = new p.shapes.rectangle({
+const s1 = new p.shapes.Rectangle({
     pin: [50, 50],
     edge: [90, 120],
     fill: true,
     color: 'blue'
 });
 
-const s2 = new p.shapes.rectangle({
+const s2 = new p.shapes.Rectangle({
     pin: [140, 50],
     edge: [120, 90],
     fill: true,
@@ -67,7 +67,7 @@ const s2 = new p.shapes.rectangle({
 });
 
 
-const c = new p.shapes.composite({
+const c = new p.shapes.Composite({
     pin: [50, 50],
     center: [155, 85],
     rotate: 45
@@ -86,6 +86,9 @@ s1.y(60);
 s2.x(200);
 
 console.log('图形数量:' + p.getShapesCount());
+
+
+console.log(/^on./g.test('Mouseoveron'));
 
 </script>
 </body>

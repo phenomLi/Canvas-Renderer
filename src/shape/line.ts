@@ -1,4 +1,4 @@
-import { shape } from './baseShape';
+import { Shape } from './BaseShape';
 
 
 class LineConfig {
@@ -19,7 +19,7 @@ class Line {
 
     constructor() {}
 
-    init(ctx: CanvasRenderingContext2D, shape: shape): Line {
+    init(ctx: CanvasRenderingContext2D, shape: Shape): Line {
         this.ctx = ctx;
         this.oX = <number>shape.x();
         this.oY = <number>shape.y();

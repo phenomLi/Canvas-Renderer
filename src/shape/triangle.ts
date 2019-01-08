@@ -1,5 +1,6 @@
-import { shape, shapeConfig } from './baseShape';
-import { broadcast, rotate } from '../render/util';
+import { Shape, shapeConfig } from './BaseShape';
+import { rotate } from '../render/util';
+import Broadcast from './../Broadcast/Broadcast';
 
 
 class triangleConfig extends shapeConfig {
@@ -8,7 +9,7 @@ class triangleConfig extends shapeConfig {
 
 
 //绘制三角形
-export class triangle extends shape {
+export class Triangle extends Shape {
     private _edge: number;
 
     constructor(config: triangleConfig) {
@@ -24,10 +25,10 @@ export class triangle extends shape {
         };
     }
 
-    edge(edge?: number): number | shape {
+    edge(edge?: number): number | Shape {
         if(edge !== undefined && typeof edge === 'number') {
             this._edge = edge;
-            this._isMount && broadcast.notify();
+            this._isMount && Broadcast.notify('update');
             return this;
         }
         else {

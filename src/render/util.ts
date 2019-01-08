@@ -1,45 +1,16 @@
-import { group } from '../shape/group';
+import { Group } from '../shape/Group';
 import { ShapeType } from './core';
-import { composite } from '../shape/composite';
+import { Composite } from '../shape/Composite';
+import { Shape } from '../shape/BaseShape';
 
 
 
-// 广播器
-export const broadcast = {
-    notifyCount: Number,
-    taskCount: Number,
-    listener: Function,
-
-    init(listener: Function) {
-        this.notifyCount = 0;
-        this.taskCount = 0;
-        this.listener = listener;
-    },
-
-    notify() {
-        this.notifyCount++;
-
-        // 异步更新
-        setTimeout(function() {
-            this.taskCount++;
-
-            if(this.taskCount === this.notifyCount) {
-                console.log('申请更新次数：' + this.notifyCount);
-
-                this.taskCount = this.notifyCount = 0;
-                this.listener();
-            }
-        }.bind(this), 0);
-    }
-}
-
-
-// group集合深度优先搜索
+// 集合类图形深度优先搜索
 export function DFS(shapeList: Array<ShapeType>, fn: Function) {
     shapeList.map(item => {
         if(item.type() === 'group' || item.type() === 'composite') {
             fn(item);
-            DFS((<group | composite>item).getShapeList(), fn);
+            DFS((<Group | Composite>item).getShapeList(), fn);
         }
         else {
             fn(item);
@@ -62,6 +33,11 @@ export function rotate(ctx: CanvasRenderingContext2D, center: Array<number>, deg
     ctx.rotate(deg/180*Math.PI);
     ctx.translate(-center[0], -center[1]);
 } 
+
+// 判断鼠标是否在某个图形内
+export function isInShape(shape: Shape | Composite, x: number, y: number) {
+
+}
 
 
 

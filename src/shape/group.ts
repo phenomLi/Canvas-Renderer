@@ -1,6 +1,6 @@
-import { base } from './baseShape';
-import { broadcast, DFS } from '../render/util';
-import { ShapeType } from './../render/core';
+import { Base } from './BaseShape';
+import Broadcast from './../Broadcast/Broadcast';
+import { ShapeType } from '../render/core';
 
 
 class groupConfig {
@@ -9,7 +9,7 @@ class groupConfig {
 }
 
 
-export class group extends base {
+export class Group extends Base {
     private shapeList: Array<ShapeType>;
 
     constructor(config: groupConfig) {
@@ -33,9 +33,9 @@ export class group extends base {
     append(shape: ShapeType) {
         this.shapeList.push(shape);
         
-        shape.type() === 'group'? this.count += (<group>shape).getCount(): this.count += 1;
+        shape.type() === 'group'? this.count += (<Group>shape).getCount(): this.count += 1;
 
-        this._isMount && broadcast.notify();
+        this._isMount && Broadcast.notify('update');
     }
 
     remove(shape: ShapeType) {
@@ -47,9 +47,9 @@ export class group extends base {
             }
         });
 
-        shape.type() === 'group'? this.count -= (<group>shape).getCount(): this.count -= 1;
+        shape.type() === 'group'? this.count -= (<Group>shape).getCount(): this.count -= 1;
 
-        this._isMount && broadcast.notify();
+        this._isMount && Broadcast.notify('update');
     }
 
     
@@ -58,7 +58,7 @@ export class group extends base {
             if(!item.show()) return; 
 
             if(item.type() === 'group') {
-                this.render(ctx, (<group>item).getShapeList());
+                this.render(ctx, (<Group>item).getShapeList());
             }
             else {
                 ctx.save();

@@ -1,6 +1,7 @@
-import { event } from './../event/event';
-import { broadcast, DFS } from '../render/util';
-import { ShapeType } from './../render/core';
+import { event, keyBoardEvent } from '../event/core';
+import { DFS } from '../render/util';
+import { ShapeType } from '../render/core';
+import Broadcast from './../Broadcast/Broadcast';
 
 export class shapeConfig {
     // 位置
@@ -15,23 +16,25 @@ export class shapeConfig {
     // event
     onClick: (e: event) => {};
     onMouseOver: (e: event) => {};
+    onMouseOut: (e: event) => {};
     onMouseMove: (e: event) => {};
     onMouseDown: (e: event) => {};
     onMouseUp: (e: event) => {};
-    onKeyDown: Array<(key: number, e: event)=>{}>;
+    onKeyPress: keyBoardEvent;
 
     // hook
-    mounted: (o: shape) => {};
+    mounted: () => {};
     removed: () => {};
 }
 
 
 
-export class base {
+export class Base {
     protected _id: symbol;
     protected _type: string;
     protected _isShow: boolean;
     protected _isMount: boolean;
+    protected event;
 
     protected _mounted: Function;
     protected _removed: Function;
@@ -43,10 +46,19 @@ export class base {
         this._type = type;
         this._isShow = true;
         this._isMount = false;
+        this.event = {};
         this.count = 1;
 
         this._mounted = config !== undefined? config.mounted: () => {};
         this._removed = config !== undefined? config.removed: () => {};
+
+        // 保存config中声明的事件
+        for(let prop in config) {
+            if(/^on./g.test(prop)) {
+                let eventName = prop.toLowerCase().substring(2);
+                this.bind(eventName, config[prop]);
+            }
+        }
     }
     
     // 元素id
@@ -80,7 +92,7 @@ export class base {
     }
 
     // 显示、不显示
-    show(isShow?: boolean): boolean | base {
+    show(isShow?: boolean): boolean | Base {
         if(isShow !== undefined && typeof isShow === 'boolean') {
             this._isShow = isShow;
 
@@ -90,7 +102,7 @@ export class base {
                 });
             }
 
-            this._isMount && broadcast.notify();
+            this._isMount && Broadcast.notify('update');
             return this;
         }
         else {
@@ -109,8 +121,25 @@ export class base {
         return this.count;
     }
 
-    /** 钩子 */
+    /** 事件 */
+    // 只有shape和composite类型有该方法
+    bind(event: string, fn: (e: event) => {} | keyBoardEvent) {
+        this.event[event] = fn;;
+    }
+
+
+    /** 状态钩子 */
     mounted() {
+        
+        // 当图形挂载到画布上时，绑定事件
+        for(let prop in this.event) {
+            Broadcast.notify('event', {
+                shape: this,
+                eventName: prop,
+                fn: this.event[prop]
+            });
+        }
+
         this._mounted && typeof this._mounted === 'function' && this._mounted();
     }
 
@@ -125,7 +154,7 @@ export class base {
 
 
 // 图形基类
-export class shape extends base {
+export class Shape extends Base {
     protected _x: number;
     protected _y: number;
     protected _color: string;
@@ -147,10 +176,10 @@ export class shape extends base {
 
     /** 基本属性 */
 
-    x(x?: number): number | shape {
+    x(x?: number): number | Shape {
         if(x !== undefined && typeof x === 'number') {
             this._x = x;
-            this._isMount && broadcast.notify();
+            this._isMount && Broadcast.notify('update');
             return this;
         }
         else {
@@ -158,10 +187,10 @@ export class shape extends base {
         }
     }
 
-    y(y?: number): number | shape {
+    y(y?: number): number | Shape {
         if(y !== undefined && typeof y === 'number') {
             this._y = y;
-            this._isMount && broadcast.notify();
+            this._isMount && Broadcast.notify('update');
             return this;
         }
         else {
@@ -169,10 +198,10 @@ export class shape extends base {
         }
     }
 
-    color(color?: string): string | shape {
+    color(color?: string): string | Shape {
         if(color !== undefined && typeof color === 'string') {
             this._color = color;
-            this._isMount && broadcast.notify();
+            this._isMount && Broadcast.notify('update');
             return this;
         }
         else {
@@ -180,10 +209,10 @@ export class shape extends base {
         }
     }
 
-    fill(fill?: boolean): boolean | shape {
+    fill(fill?: boolean): boolean | Shape {
         if(fill !== undefined && typeof fill === 'boolean') {
             this._fill = fill;
-            this._isMount && broadcast.notify();
+            this._isMount && Broadcast.notify('update');
             return this;
         }
         else {
@@ -191,10 +220,10 @@ export class shape extends base {
         }
     }
 
-    rotate(deg?: number): number | shape {
+    rotate(deg?: number): number | Shape {
         if(deg !== undefined && typeof deg === 'number') {
             this._rotate = deg;
-            this._isMount && broadcast.notify();
+            this._isMount && Broadcast.notify('update');
             return this;
         }
         else {
@@ -212,17 +241,9 @@ export class shape extends base {
         };
     }
 
-
-    /** 事件 */
-
-    bind() {
-
-    }
-
-
     /** 动画 */
 
-    animate(o: shape) {
+    animate(o: Shape) {
 
     }
 

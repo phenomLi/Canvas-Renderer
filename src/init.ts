@@ -1,9 +1,7 @@
-import { shape } from './shape/baseShape';
-import { shapes, ShapeType } from './render/core';
-import { group } from './shape/group';
+import { shapes, utils, ShapeType } from './render/core';
 import { shapeHeap } from './render/core';
-import { broadcast } from './render/util';
-
+import Broadcast from './Broadcast/Broadcast';
+import { EventSystem } from './event/core';
 
 /* ------------------------------------------------------------------------------------------ */
 
@@ -60,16 +58,20 @@ class initCanvasStyle {
 
 
 class init {
+    private canvasEle: HTMLCanvasElement;
     private canvasStyle: initCanvasStyle;
     private ctx: CanvasRenderingContext2D;
     private shapeHeap: shapeHeap;
+    private eventSystem: EventSystem;
     public shapes;
+    public utils;
 
     constructor(canvasEle: HTMLCanvasElement, config: canvasConfig) {
+        this.canvasEle = canvasEle;
         this.ctx = canvasEle.getContext('2d');
 
         // 设置canvas基本样式
-        this.canvasStyle = new initCanvasStyle(canvasEle, config);
+        this.canvasStyle = new initCanvasStyle(this.canvasEle, config);
 
         //初始化图形对象堆
         this.shapeHeap = new shapeHeap(this.ctx, {
@@ -77,11 +79,18 @@ class init {
             height: this.getHeight()
         });
 
-        //初始化广播器(监听者：图形对象堆的界面重刷方法)
-        broadcast.init(this.shapeHeap.reRender.bind(this.shapeHeap));
+        //初始化事件系统
+        this.eventSystem = new EventSystem(this.canvasEle);
 
-        // 图形api
+        //初始化广播器(监听者：图形对象堆的界面重刷方法)
+        Broadcast.addListener('update', this.shapeHeap.update.bind(this.shapeHeap));
+        //初始化广播器(监听者：图形对象堆的界面重刷方法)
+        Broadcast.addListener('event', this.eventSystem.addEvent.bind(this.eventSystem));
+
+        // 暴露图形api
         this.shapes = shapes;
+        // 暴露实用函数api
+        this.utils = utils;
     }
 
 

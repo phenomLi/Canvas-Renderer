@@ -1,5 +1,5 @@
-import { shape, shapeConfig } from './baseShape';
-import { line } from './line';
+import { Shape, shapeConfig } from './BaseShape';
+import { line } from './Line';
 import { rotate } from '../render/util';
 
 class customConfig extends shapeConfig {
@@ -11,7 +11,7 @@ class customConfig extends shapeConfig {
 
 
 //绘制定制图形
-export class custom extends shape {
+export class Custom extends Shape {
     private _draw: Function;
     private center: Array<number>;
 
