@@ -1,5 +1,4 @@
 import { Shape, shapeConfig } from './BaseShape';
-import { rotate } from '../render/util';
 import Broadcast from './../Broadcast/Broadcast';
 
 
@@ -11,11 +10,18 @@ class triangleConfig extends shapeConfig {
 //绘制三角形
 export class Triangle extends Shape {
     private _edge: number;
+    private midEdge: number;
+    private height: number;
 
     constructor(config: triangleConfig) {
         super(config, 'triangle');
 
         this._edge = config.edge;
+        this.midEdge = this._edge/2;
+        this.height = Math.sqrt(this._edge*this._edge - this.midEdge*this.midEdge);
+        this._center = [this._x, this._y + this.height/2];
+
+        this.drawPath().generatePath();
     }
 
     config() {
@@ -28,6 +34,7 @@ export class Triangle extends Shape {
     edge(edge?: number): number | Shape {
         if(edge !== undefined && typeof edge === 'number') {
             this._edge = edge;
+            this.drawPath();
             this._isMount && Broadcast.notify('update');
             return this;
         }
@@ -35,26 +42,12 @@ export class Triangle extends Shape {
             return this._edge;
         }
     }
+    
+    drawPath(): Shape {
+        this._path.moveTo(this._x, this._y);
+        this._path.lineTo(this._x - this.midEdge, this._y + this.height);
+        this._path.lineTo(this._x + this.midEdge, this._y + this.height);
 
-    draw(ctx: CanvasRenderingContext2D) {
-        let midEdge = this._edge/2;
-        let height = Math.sqrt(this._edge*this._edge - midEdge*midEdge);
-
-        rotate(ctx, [this._x, this._y + height/2], this._rotate);
-
-        ctx.beginPath();
-        ctx.moveTo(this._x, this._y);
-        ctx.lineTo(this._x - midEdge, this._y + height);
-        ctx.lineTo(this._x + midEdge, this._y + height);
-
-        if(this._fill) {
-            ctx.fillStyle = this._color;
-            ctx.fill();
-        }
-        else {
-            ctx.strokeStyle = this._color;
-            ctx.closePath();
-            ctx.stroke();
-        }
+        return this;
     }
 } 

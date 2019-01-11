@@ -13,25 +13,25 @@ class customConfig extends shapeConfig {
 //绘制定制图形
 export class Custom extends Shape {
     private _draw: Function;
-    private center: Array<number>;
 
     constructor(config: customConfig) {
         super(config, 'custom');
 
-        this.center = config.center;
+        this._center = config.center;
         this._draw = config.draw;
+
+        this.drawPath().generatePath();
     }
 
     config() {
         return {
             ...this.getBaseConfig(),
-            center: this.center,
             draw: this._draw
         };
     }
 
-    draw(ctx: CanvasRenderingContext2D) {
-        rotate(ctx, [this.center[0], this.center[1]], this._rotate);
-        this._draw(ctx, line.init(ctx, this));
+    drawPath(): Shape {
+        this._draw(this._path, line.init(this._path, [this._x, this._y]));
+        return this;
     }
 }

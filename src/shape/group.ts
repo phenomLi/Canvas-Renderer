@@ -4,6 +4,7 @@ import { ShapeType } from '../render/core';
 
 
 class groupConfig {
+    shapes: Array<ShapeType>;
     mounted: Function;
     removed: Function;
 }
@@ -21,6 +22,7 @@ export class Group extends Base {
 
     config(): groupConfig {
         return {
+            shapes: this.shapeList,
             mounted: this._mounted,
             removed: this._removed
         }

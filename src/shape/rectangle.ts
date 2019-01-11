@@ -1,5 +1,4 @@
 import { Shape, shapeConfig } from './BaseShape';
-import { rotate } from '../render/util';
 import Broadcast from './../Broadcast/Broadcast';
 
 
@@ -18,6 +17,9 @@ export class Rectangle extends Shape {
 
         this._width = config.edge[0];
         this._height = config.edge[1];
+
+        // 描绘路径,不渲染
+        this.drawPath().generatePath();
     }
 
     config() {
@@ -30,6 +32,7 @@ export class Rectangle extends Shape {
     width(width?: number): number | Shape {
         if(width !== undefined && typeof width === 'number') {
             this._width = width;
+            this.drawPath();
             this._isMount && Broadcast.notify('update');
             return this;
         }
@@ -41,6 +44,7 @@ export class Rectangle extends Shape {
     height(height?: number): number | Shape {
         if(height !== undefined && typeof height === 'number') {
             this._height = height;
+            this.drawPath();
             this._isMount && Broadcast.notify('update');
             return this;
         }
@@ -49,16 +53,10 @@ export class Rectangle extends Shape {
         }
     }
 
-    draw(ctx: CanvasRenderingContext2D) {
-        rotate(ctx, [this._x + this._width/2, this._y + this._height/2], this._rotate);
+    drawPath(): Shape {
+        this._center = [this._x + this._width/2, this._y + this._height/2];
+        this._path.rect(this._x, this._y, this._width, this._height);
 
-        if(this._fill) {
-            ctx.fillStyle = this._color;
-            ctx.fillRect(this._x, this._y, this._width, this._height);
-        }
-        else {
-            ctx.strokeStyle = this._color;
-            ctx.strokeRect(this._x, this._y, this._width, this._height);
-        }
+        return this;
     }
 } 

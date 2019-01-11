@@ -1,44 +1,34 @@
 import { Shape } from './BaseShape';
-
-
-class LineConfig {
-    pin: Array<number>;
-    color: string;
-    fill: boolean;
-}
+import { Matrix } from './../render/core';
 
 
 class Line {
-    ctx: CanvasRenderingContext2D;
+    path: Path2D;
+    tPath: Path2D;
     oX: number;
     oY: number;
     endX: number;
     endY: number;
-    color: string;
-    fill: boolean;
 
     constructor() {}
 
-    init(ctx: CanvasRenderingContext2D, shape: Shape): Line {
-        this.ctx = ctx;
-        this.oX = <number>shape.x();
-        this.oY = <number>shape.y();
-        this.color = <string>shape.color();
-        this.fill = <boolean>shape.fill();
+    init(path: Path2D, pin: Array<number>): Line {
+        this.path = path;
+        this.oX = pin[0];
+        this.oY = pin[1];
+        this.endX = this.oX;
+        this.endY = this.oY;
+        this.tPath = new Path2D();
 
         return this;
     }
 
-    start(pin: Array<number>): Line {
-        this.endX = pin[0];
-        this.endY = pin[1];
-        
-        this.ctx.translate(this.oX, this.oY);
+    start(): Line {
+        Matrix.translateMatrix.e = this.oX;
+        Matrix.translateMatrix.f = this.oY;
 
-        this.ctx.fillStyle = this.color;
-        this.ctx.strokeStyle = this.color;
-        this.ctx.beginPath();
-        this.ctx.moveTo(this.endX, this.endY);
+        this.path.addPath(this.tPath, Matrix.translateMatrix);
+        this.path.moveTo(this.endX, this.endY);
 
         return this;
     }
@@ -46,7 +36,7 @@ class Line {
     // 直线
     bee(path: Array<Array<number>>): Line {
         for(let i = 0; i < path.length; i ++) {
-            this.ctx.lineTo(path[i][0], path[i][1]);
+            this.path.lineTo(path[i][0], path[i][1]);
         }
 
         this.endX = path[path.length - 1][0];
@@ -57,8 +47,8 @@ class Line {
 
     // 贝塞尔曲线
     bez(ctrlPoint1: Array<number>, ctrlPoint2: Array<number>, endPoint: Array<number>) {
-        this.ctx.moveTo(this.endX, this.endY);
-        this.ctx.bezierCurveTo(ctrlPoint1[0], ctrlPoint1[1], ctrlPoint2[0], ctrlPoint2[1], endPoint[0], endPoint[1]);
+        this.path.moveTo(this.endX, this.endY);
+        this.path.bezierCurveTo(ctrlPoint1[0], ctrlPoint1[1], ctrlPoint2[0], ctrlPoint2[1], endPoint[0], endPoint[1]);
         this.endX = endPoint[0]; this.endY = endPoint[1];
     }
 
@@ -70,7 +60,7 @@ class Line {
         xCenter = this.endX - radius*Math.cos((360 - startDeg)/180*Math.PI);
         yCenter = this.endY + radius*Math.sin((360 - startDeg)/180*Math.PI);
 
-        this.ctx.arc(xCenter, yCenter, radius, (startDeg)/180*Math.PI, endDeg/180*Math.PI, clockWise);
+        this.path.arc(xCenter, yCenter, radius, (startDeg)/180*Math.PI, endDeg/180*Math.PI, clockWise);
 
         // 将弧的圆心进行位移，确保弧的末尾端点和下一段直线的开端可以衔接
         this.endX = xCenter - radius*Math.cos((360 - endDeg)/180*Math.PI);
@@ -80,7 +70,7 @@ class Line {
     }
 
     end() {
-        this.fill? this.ctx.fill(): this.ctx.stroke();
+        Matrix.translateMatrix.e = Matrix.translateMatrix.f = 0;
     } 
 }
 

@@ -1,6 +1,6 @@
 import { event, keyBoardEvent } from '../event/core';
-import { DFS } from '../render/util';
-import { ShapeType } from '../render/core';
+import { DFS, matrixMulti, rotate, transform } from '../render/util';
+import { ShapeType, Matrix } from '../render/core';
 import Broadcast from './../Broadcast/Broadcast';
 
 export class shapeConfig {
@@ -12,6 +12,8 @@ export class shapeConfig {
     fill: boolean;
     // 旋转
     rotate: number;
+    // 形变
+    transform: Array<Array<number>>;
 
     // event
     onClick: (e: event) => {};
@@ -23,11 +25,9 @@ export class shapeConfig {
     onKeyPress: keyBoardEvent;
 
     // hook
-    mounted: () => {};
-    removed: () => {};
+    mounted: Function;
+    removed: Function;
 }
-
-
 
 export class Base {
     protected _id: symbol;
@@ -46,21 +46,15 @@ export class Base {
         this._type = type;
         this._isShow = true;
         this._isMount = false;
-        this.event = {};
         this.count = 1;
+        this.event = {};
 
         this._mounted = config !== undefined? config.mounted: () => {};
         this._removed = config !== undefined? config.removed: () => {};
-
-        // 保存config中声明的事件
-        for(let prop in config) {
-            if(/^on./g.test(prop)) {
-                let eventName = prop.toLowerCase().substring(2);
-                this.bind(eventName, config[prop]);
-            }
-        }
     }
     
+
+
     // 元素id
     id() {
         return this._id;
@@ -121,16 +115,8 @@ export class Base {
         return this.count;
     }
 
-    /** 事件 */
-    // 只有shape和composite类型有该方法
-    bind(event: string, fn: (e: event) => {} | keyBoardEvent) {
-        this.event[event] = fn;;
-    }
-
-
     /** 状态钩子 */
     mounted() {
-        
         // 当图形挂载到画布上时，绑定事件
         for(let prop in this.event) {
             Broadcast.notify('event', {
@@ -147,38 +133,57 @@ export class Base {
         this._removed && typeof this._removed === 'function' && this._removed();
     }
 
-    /** 渲染(需重载) */
-    draw(ctx: CanvasRenderingContext2D) {}
+    // 渲染路径到canvas(需重载)
+    draw(ctx: CanvasRenderingContext2D, matrix: DOMMatrix) {}
 }
 
 
 
 // 图形基类
 export class Shape extends Base {
+    protected _path: Path2D;
     protected _x: number;
     protected _y: number;
+    protected _center: Array<number>;
     protected _color: string;
     protected _fill: boolean;
     protected _rotate: number;
+    protected _transform: Array<Array<number>>;
+    protected originEventName;
 
-    protected ctx: CanvasRenderingContext2D;
+    protected writableProperties: Array<string>;
 
     constructor(config: shapeConfig, type: string) {
         super(config, type);
 
+        this._path = new Path2D();
         this._x = config.pin[0];
         this._y = config.pin[1];
         this._color = config.color;
         this._fill = (config.fill === undefined)? true: config.fill;
         this._rotate = config.rotate || 0;
+        this._transform = config.transform || [];
+        this.originEventName = {};
+
+        // 保存config中声明的事件
+        for(let prop in config) {
+            if(/^on./g.test(prop)) {
+                this.originEventName[prop] = config[prop];
+                this.bind(prop.toLowerCase().substring(2), config[prop]);
+            }
+        }
     }
 
 
     /** 基本属性 */
+    path(): Path2D {
+        return this._path;
+    }
 
     x(x?: number): number | Shape {
         if(x !== undefined && typeof x === 'number') {
             this._x = x;
+            this.drawPath();
             this._isMount && Broadcast.notify('update');
             return this;
         }
@@ -190,11 +195,22 @@ export class Shape extends Base {
     y(y?: number): number | Shape {
         if(y !== undefined && typeof y === 'number') {
             this._y = y;
+            this.drawPath();
             this._isMount && Broadcast.notify('update');
             return this;
         }
         else {
             return this._y;
+        }
+    }
+
+    center(center?: Array<number>): Array<number> | Shape {
+        if(center !== undefined && center instanceof Array) {
+            this._center = center;
+            return this;
+        }
+        else {
+            return this._center;
         }
     }
 
@@ -223,6 +239,7 @@ export class Shape extends Base {
     rotate(deg?: number): number | Shape {
         if(deg !== undefined && typeof deg === 'number') {
             this._rotate = deg;
+            this.generatePath();
             this._isMount && Broadcast.notify('update');
             return this;
         }
@@ -231,27 +248,77 @@ export class Shape extends Base {
         }
     }
 
+    transform(trans: Array<Array<number>>): Array<Array<number>> | Shape {
+        if(trans !== undefined && trans instanceof Array) {
+            this._transform = trans;
+            this.generatePath();
+            this._isMount && Broadcast.notify('update');
+            return this;
+        }
+        else {
+            return this._transform;
+        }
+    }
+
     // 获取基本属性
     protected getBaseConfig() {
         return {
             pin: [this._x, this._y],
+            center: this.center,
             color: this._color,
             fill: this._fill,
-            rotate: this._rotate
+            rotate: this._rotate,
+            transform: this._transform,
+            ...this.originEventName,
+
+            // hook
+            mounted: this.mounted,
+            removed: this.removed
         };
     }
 
+
+    /** 事件 */
+    // 只有shape和composite类型有该方法
+    bind(event: string, fn: (e: event) => {} | keyBoardEvent) {
+        this.event[event] = fn;;
+    }
+
+
     /** 动画 */
+    animate(o: Shape) {}
+    start(fn: Function) {}
+    end(fn: Function) {}
 
-    animate(o: Shape) {
+    // 定义path2d路径(需重载)
+    drawPath(): Shape { return this; }
 
+    // 生成path2d路径
+    generatePath() {
+        let tPath = new Path2D();
+        
+        tPath.addPath(
+            this._path, 
+            matrixMulti(
+                rotate(Matrix.rotateMatrix, this._center, this._rotate), 
+                transform(Matrix.transformMatrix, this._center, this._transform), 
+                Matrix.resMatrix
+            )
+        );
+        
+        this._path = tPath;
     }
 
-    start(fn: Function) {
+    draw(ctx: CanvasRenderingContext2D) {
+        if(!this.show()) return; 
 
-    }
-
-    end(fn: Function) {
-
+        if(this._fill) {
+            ctx.fillStyle = this._color;
+            ctx.fill(this._path);
+        }
+        else {
+            ctx.strokeStyle = this._color;
+            ctx.stroke(this._path);
+        }
     }
 }

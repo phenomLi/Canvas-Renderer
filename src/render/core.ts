@@ -1,16 +1,24 @@
-import { DFS, isInShape } from './util';
+import { DFS, isInShape, rotate, transform } from './util';
 import Broadcast from './../Broadcast/Broadcast';
 import { Shape } from '../shape/BaseShape';
 import { Custom } from '../shape/Custom';
 import { Triangle } from '../shape/Triangle';
 import { Circle } from '../shape/Circle';
 import { Rectangle } from '../shape/Rectangle';
+import { Ellipse } from './../shape/Ellipse';
 import { Group } from '../shape/Group';
 import { Composite } from '../shape/Composite';
 
  
 // 图形类
 export type ShapeType = Shape | Group | Composite;
+// 4个svg矩阵：旋转矩阵, 形变矩阵, 位移矩阵, 相乘结果矩阵
+export const Matrix = {
+    rotateMatrix: document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix(),
+    transformMatrix: document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix(),
+    translateMatrix: document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix(),
+    resMatrix: document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix()
+};
 
 
 class canvasInfo {
@@ -117,7 +125,7 @@ export class shapeHeap {
             this.aSyncUpdateRequestCount++;
 
             if(this.aSyncUpdateRequestCount === this.updateRequestCount) {
-                console.log('申请更新次数：' + this.notifyCount);
+                console.log('申请更新次数：' + this.updateRequestCount);
 
                 this.updateRequestCount = this.aSyncUpdateRequestCount = 0;
                 this.reRender();
@@ -147,12 +155,15 @@ export const shapes = {
     Rectangle,
     Triangle,
     Group,
-    Composite
+    Composite,
+    Ellipse
 }
 
 // 实用函数集合
 export const utils = {
     isInShape,
+    rotate,
+    transform
 }
 
 

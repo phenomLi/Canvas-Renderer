@@ -15,12 +15,16 @@ export class Circle extends Shape {
     constructor(config: circleConfig) {
         super(config, 'circle');
 
+        this._center = [this._x, this._y];
         this._radius = config.radius;
+
+        this.drawPath().generatePath();
     }
 
     radius(r?: number): number | Shape {
         if(r !== undefined && typeof r === 'number') {
             this._radius = r;
+            this.drawPath();
             this._isMount && Broadcast.notify('update');
             return this;
         }
@@ -36,17 +40,9 @@ export class Circle extends Shape {
         };
     }
 
-    draw(ctx: CanvasRenderingContext2D) {
-        ctx.beginPath();
-        ctx.arc(this._x, this._y, this._radius, 0, 2*Math.PI, true);
+    drawPath(): Shape {
+        this._path.arc(this._x, this._y, this._radius, 0, 2*Math.PI, true);
 
-        if(this._fill) {
-            ctx.fillStyle = this._color;
-            ctx.fill();
-        }
-        else {
-            ctx.strokeStyle = this._color;
-            ctx.stroke();
-        }
+        return this;
     }
 } 

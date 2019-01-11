@@ -1,44 +1,34 @@
-import { Shape, Base } from './BaseShape';
+import { Shape, shapeConfig } from './BaseShape';
 import { rotate } from '../render/util';
 import Broadcast from './../Broadcast/Broadcast';
 
 
-class compositeConfig {
-    pin: Array<number>;
+class compositeConfig extends shapeConfig {
     center: Array<number>;
-    rotate: number;
-
-    mounted: Function;
-    removed: Function;
+    shapes: Array<Shape | Composite>;
 }
 
 
-export class Composite extends Base {
-    private _x: number;
-    private _y: number;
-    private _rotate: number;
-    private center: Array<number>;
-
+export class Composite extends Shape {
     private shapeList: Array<Shape | Composite>;
 
     constructor(config: compositeConfig) {
         super(config, 'composite');
 
-        this._x = config.pin[0];
-        this._y = config.pin[1];
-        this._rotate = config.rotate || 0;
-        this.center = config.center;
-
+        this._center = config.center;
         this.shapeList = [];
+
+        if(config && config.shapes) {
+            config.shapes.map(item => {
+                this.join(item);
+            });
+        }
     } 
 
-    config(): compositeConfig {
+    config() {
         return {
-            pin: [this._x, this._y],
-            rotate: this._rotate,
-            center: this.center,
-            mounted: this._mounted,
-            removed: this._removed
+            ...this.getBaseConfig(),
+            shapes: this.shapeList,
         }
     }
 
@@ -78,6 +68,33 @@ export class Composite extends Base {
         }
     }
 
+    rotate(deg?: number): number | Shape {
+        if(deg !== undefined) {
+            deg && (this._rotate = deg);
+            this.shapeList.map(item => {
+                let tCenter = item.center();
+                (<Shape>(<Shape>item.center(this._center)).rotate(deg));
+                item.center(<Array<number>>tCenter);
+            });
+            this._isMount && Broadcast.notify('update');
+            return this;
+        }
+        else {
+            return this._rotate;
+        }
+    }
+
+    transform(trans?: Array<Array<number>>): Array<Array<number>> | Shape {
+        if(trans !== undefined) {
+            trans && (this._transform = trans);
+            this._isMount && Broadcast.notify('update');
+            return this;
+        }
+        else {
+            return this._transform;
+        }
+    }
+
     getShapeList(): Array<Shape | Composite> {
         return this.shapeList;
     }
@@ -85,9 +102,14 @@ export class Composite extends Base {
     join(shape: Shape | Composite) {
         if(shape.type() === 'group') {
             console.warn('group类型不能加入composite');
-
             return;
         }
+
+        let tCenter = shape.center();
+
+        (<Shape>(<Shape>shape.center(this._center)).rotate(this._rotate));
+
+        shape.center(<Array<number>>tCenter);
 
         this.shapeList.push(shape);
 
@@ -95,9 +117,7 @@ export class Composite extends Base {
     }
     
     render(ctx: CanvasRenderingContext2D, shapeList: Array<Shape | Composite>) {
-        this.shapeList.map(item => {
-            if(!item.show()) return; 
-
+        shapeList.map(item => {
             if(item.type() === 'composite') {
                 this.render(ctx, (<Composite>item).getShapeList());
             }
@@ -110,7 +130,6 @@ export class Composite extends Base {
     }
 
     draw(ctx: CanvasRenderingContext2D) {
-        rotate(ctx, [this.center[0], this.center[1]], this._rotate);
-        this.render(ctx, this.shapeList);
+        this.render(ctx, this.getShapeList());
     }
 }
