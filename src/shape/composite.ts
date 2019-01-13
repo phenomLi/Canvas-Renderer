@@ -1,6 +1,7 @@
 import { Shape, shapeConfig } from './BaseShape';
-import { rotate } from '../render/util';
 import Broadcast from './../Broadcast/Broadcast';
+import { rotate, DFS, transform } from '../render/util';
+import { Matrix } from '../render/core';
 
 
 class compositeConfig extends shapeConfig {
@@ -8,6 +9,13 @@ class compositeConfig extends shapeConfig {
     shapes: Array<Shape | Composite>;
 }
 
+
+
+/**
+ * 难点：合成类型的旋转和形变
+ * 思路：对一个合成类型图形进行旋转（形变）操作 =》 对合成图形下的每个子图形进行以合成图形的中心旋转（形变）
+ * =》但要保持子图形原有的旋转（形变）状态，且不改变子图形的center属性
+ */
 
 export class Composite extends Shape {
     private shapeList: Array<Shape | Composite>;
@@ -20,10 +28,24 @@ export class Composite extends Shape {
 
         if(config && config.shapes) {
             config.shapes.map(item => {
-                this.join(item);
+                this.join(item, true);
             });
         }
+
+        this.initSetter();
     } 
+
+    join(shape: Shape | Composite, deep?: boolean) {
+        if(shape.attr('type') === 'group') {
+            console.warn('group类型不能加入composite');
+            return;
+        }
+
+        //this.shapeList.push(this.shapeProcessor(deep? Broadcast.notify('clone', shape): shape));
+        this.shapeList.push(this.shapeProcessor(shape));
+
+        this.isMount && Broadcast.notify('update');
+    }
 
     config() {
         return {
@@ -32,104 +54,115 @@ export class Composite extends Shape {
         }
     }
 
-    x(x?: number): number | Composite {
-        if(x !== undefined && typeof x === 'number') {
-            let d = x - this._x;
+    // 重载setter（x）
+    setX(x: number) {
+        let d = x - this._x;
+        this._x = x;
+        this._center[0] = this._center[0] + d;
 
-            this._x = x;
-
-            this.shapeList.map(item => {  
-                item.x(<number>item.x() + d);
-            });
-
-            this._isMount && Broadcast.notify('update');
-            return this;
-        }
-        else {
-            return this._x;
-        }
+        this.shapeList.map(item => {  
+            item.attr('x', item.attr('x') + d);
+        });
     }
 
-    y(y?: number): number | Composite {
-        if(y !== undefined && typeof y === 'number') {
-            let d = y - this._y;
+    // 重载setter（y）
+    setY(y: number) {
+        let d = y - this._y;
+        this._y = y;
+        this._center[1] = this._center[1] + d;
 
-            this._y = y;
-
-            this.shapeList.map(item => {  
-                item.y(<number>item.y() + d);
-            });
-
-            this._isMount && Broadcast.notify('UPDATE');
-            return this;
-        }
-        else {
-            return this._y;
-        }
+        this.shapeList.map(item => {  
+            item.attr('y', item.attr('y') + d);
+        });
     }
 
-    rotate(deg?: number): number | Shape {
-        if(deg !== undefined) {
-            deg && (this._rotate = deg);
-            this.shapeList.map(item => {
-                let tCenter = item.center();
-                (<Shape>(<Shape>item.center(this._center)).rotate(deg));
-                item.center(<Array<number>>tCenter);
-            });
-            this._isMount && Broadcast.notify('update');
-            return this;
-        }
-        else {
-            return this._rotate;
-        }
+    // 重载setter（show）
+    setShow(show: boolean) {
+        this._show = show;
+        this.shapeList.map(item => {
+            item.attr('show', show);
+        });
     }
 
-    transform(trans?: Array<Array<number>>): Array<Array<number>> | Shape {
-        if(trans !== undefined) {
-            trans && (this._transform = trans);
-            this._isMount && Broadcast.notify('update');
-            return this;
-        }
-        else {
-            return this._transform;
-        }
+    // 重载setter（rotate）
+    setRotate(deg: number) {
+        this._rotate = deg;
+
+        DFS(this.getShapeList(), item => {
+            item.drawPath().rotatePath().transFormPath();
+        }, false);
+
+        this.shapeList.map(item => {
+            this.rotatePath(item);
+        });
+    }
+
+    // 重载setter（transform）
+    setTransform(trans: Array<Array<number>>) {
+        DFS(this.getShapeList(), item => {
+            item.drawPath().rotatePath().transFormPath();
+        }, false);
+
+        this.shapeList.map(item => {
+            this.transFormPath(item);
+        });
+        return this;
     }
 
     getShapeList(): Array<Shape | Composite> {
         return this.shapeList;
     }
+    
+    // 处理一下新加进来的shape
+    shapeProcessor(shape: Shape | Composite): Shape {
+        // 对加入的每个图形进行旋转操作
+        this._rotate && this.rotatePath(shape);
+        // 对加入的每个图形进行形变操作
+        this._transform && this.transFormPath(shape);
+        return shape;
+    }
 
-    join(shape: Shape | Composite) {
-        if(shape.type() === 'group') {
-            console.warn('group类型不能加入composite');
-            return;
+    // 以合成类型图形为中心对每个字图形进行旋转
+    rotatePath(shape: Shape | Composite): Shape {
+        if(shape.attr('type') === 'composite') {
+            DFS(shape.getShapeList(), item => {
+                let tPath = new Path2D();
+                tPath.addPath(item.getPath(), rotate(Matrix.rotateMatrix, this._center, this._rotate));
+                item.setPath(tPath);
+            }, false);
+        }
+        else {
+            let tPath = new Path2D();
+            tPath.addPath(shape.getPath(), rotate(Matrix.rotateMatrix, this._center, this._rotate));
+            shape.setPath(tPath);
         }
 
-        let tCenter = shape.center();
-
-        (<Shape>(<Shape>shape.center(this._center)).rotate(this._rotate));
-
-        shape.center(<Array<number>>tCenter);
-
-        this.shapeList.push(shape);
-
-        this._isMount && Broadcast.notify('update');
-    }
-    
-    render(ctx: CanvasRenderingContext2D, shapeList: Array<Shape | Composite>) {
-        shapeList.map(item => {
-            if(item.type() === 'composite') {
-                this.render(ctx, (<Composite>item).getShapeList());
-            }
-            else {
-                ctx.save();
-                item.draw(ctx);
-                ctx.restore();
-            }
-        });
+        return this;
     }
 
-    draw(ctx: CanvasRenderingContext2D) {
-        this.render(ctx, this.getShapeList());
+    // 以合成类型图形为中心对每个字图形进行形变
+    transFormPath(shape: Shape | Composite): Shape {
+        if(shape.attr('type') === 'composite') {
+            DFS(shape.getShapeList(), item => {
+                let tPath = new Path2D();
+                tPath.addPath(item.getPath(), transform(Matrix.transformMatrix, this._center, this._transform));
+                item.setPath(tPath);
+            }, false);
+        }
+        else {
+            let tPath = new Path2D();
+            tPath.addPath(shape.getPath(), transform(Matrix.transformMatrix, this._center, this._transform));
+            shape.setPath(tPath);
+        }
+
+        return this;
+    }
+
+    renderPath(ctx: CanvasRenderingContext2D) {
+        DFS(this.getShapeList(), item => {
+            ctx.save();
+            item.renderPath(ctx);
+            ctx.restore();
+        }, false);
     }
 }

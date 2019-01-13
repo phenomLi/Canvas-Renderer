@@ -2,6 +2,8 @@ import { event, keyBoardEvent } from '../event/core';
 import { DFS, matrixMulti, rotate, transform } from '../render/util';
 import { ShapeType, Matrix } from '../render/core';
 import Broadcast from './../Broadcast/Broadcast';
+import { Group } from './Group';
+import { Composite } from './composite';
 
 export class shapeConfig {
     // 位置
@@ -29,78 +31,93 @@ export class shapeConfig {
     removed: Function;
 }
 
+
+
 export class Base {
     protected _id: symbol;
     protected _type: string;
-    protected _isShow: boolean;
-    protected _isMount: boolean;
-    protected event;
-
+    protected _show: boolean;
     protected _mounted: Function;
     protected _removed: Function;
 
-    protected count;
+    protected isMount: boolean;
+    protected event;
+
+    protected writableProperties: Array<string>;
+    protected readonlyProperties: Array<string>;
+    protected readableProperties: Array<string>;
+
+    protected count: number;
 
     constructor(config: any, type: string) {
         this._id = Symbol();
         this._type = type;
-        this._isShow = true;
-        this._isMount = false;
+        this._show = true;
+        this._mounted = config !== undefined? config.mounted: () => {};
+        this._removed = config !== undefined? config.removed: () => {};
+
+        this.isMount = false;
         this.count = 1;
         this.event = {};
 
-        this._mounted = config !== undefined? config.mounted: () => {};
-        this._removed = config !== undefined? config.removed: () => {};
+        this.writableProperties = [];
+        this.readonlyProperties = [];
+        this.readableProperties = [];
     }
     
+    // 初始化属性设置函数
+    initSetter() {
+        this.readableProperties = this.readableProperties.concat(this.readonlyProperties, this.writableProperties);
 
+        this.writableProperties.map(attr => {
+            let upperCaseAttr = attr.substring(0, 1).toUpperCase() + attr.substring(1);
 
-    // 元素id
-    id() {
-        return this._id;
-    }
-    
-    // 元素类型
-    type(): string {
-        return this._type;
-    }
-
-    // 是否挂载到画布上
-    isMount(isMount?: boolean): boolean {
-        if(isMount !== undefined && typeof isMount === 'boolean') {
-            this._isMount = isMount;
-            // 更改挂载状态后执行钩子函数
-            isMount? this.mounted(): this.removed();
-
-            if(this.type() === 'group' || this.type() === 'composite') {
-                DFS(this.getShapeList(), item => {
-                    item.isMount(isMount);
-                    // 从画布中移除后执行钩子函数
-                    isMount? item.mounted(): item.removed();
-                });
+            if(this[`set${upperCaseAttr}`] === undefined) {
+                this[`set${upperCaseAttr}`] = function(val) {
+                    this[`_${attr}`] = val;
+                    
+                    if(attr !== 'center' && attr !== 'show') {
+                        this.drawPath().rotatePath().transFormPath();
+                    }
+                }
             }
-        }
-        else {
-            return this._isMount;
-        }
+        });
     }
 
-    // 显示、不显示
-    show(isShow?: boolean): boolean | Base {
-        if(isShow !== undefined && typeof isShow === 'boolean') {
-            this._isShow = isShow;
+    // 属性get、set
+    attr(attr: string, val?: any): any | Base {
+        if(!this.readableProperties.includes(attr)) {
+            console.warn(`${attr}属性不存在`);
+            return;
+        }
 
-            if(this.type() === 'group' || this.type() === 'composite') {
-                DFS(this.getShapeList(), item => {
-                    item.show(isShow);
-                });
+        if(val !== undefined) {
+            if(this.writableProperties.includes(attr)) {
+                this[`set${attr.substring(0, 1).toUpperCase() + attr.substring(1)}`](val);
+                this.isMount && Broadcast.notify('update');
             }
+            else console.warn(`${attr}不能被修改`);
 
-            this._isMount && Broadcast.notify('update');
             return this;
         }
         else {
-            return this._isShow;
+            return this[`_${attr}`];
+        }
+    }
+
+
+    // 切换挂载状态
+    toggleMount(isMount: boolean) {
+        this.isMount = isMount;
+        // 更改挂载状态后执行钩子函数
+        isMount? this.mounted(): this.removed();
+
+        if(this.attr('type') === 'group' || this.attr('type') === 'composite') {
+            DFS(this.getShapeList(), item => {
+                item.toggleMount(isMount);
+                // 从画布中移除后执行钩子函数
+                isMount? item.mounted(): item.removed();
+            });
         }
     }
     
@@ -133,15 +150,25 @@ export class Base {
         this._removed && typeof this._removed === 'function' && this._removed();
     }
 
+
+    // 定义path2D路径(需重载)
+    drawPath(): Base { return null; }
+
+    // 旋转path2D路径(需重载)
+    rotatePath(): Base { return null; }
+
+    // 形变path2D路径(需重载)
+    transFormPath(): Base { return null; }
+
     // 渲染路径到canvas(需重载)
-    draw(ctx: CanvasRenderingContext2D, matrix: DOMMatrix) {}
+    renderPath(ctx: CanvasRenderingContext2D) {}
 }
 
 
 
 // 图形基类
 export class Shape extends Base {
-    protected _path: Path2D;
+    protected path: Path2D;
     protected _x: number;
     protected _y: number;
     protected _center: Array<number>;
@@ -151,12 +178,9 @@ export class Shape extends Base {
     protected _transform: Array<Array<number>>;
     protected originEventName;
 
-    protected writableProperties: Array<string>;
-
     constructor(config: shapeConfig, type: string) {
         super(config, type);
 
-        this._path = new Path2D();
         this._x = config.pin[0];
         this._y = config.pin[1];
         this._color = config.color;
@@ -164,6 +188,9 @@ export class Shape extends Base {
         this._rotate = config.rotate || 0;
         this._transform = config.transform || [];
         this.originEventName = {};
+
+        this.writableProperties = ['x', 'y', 'center', 'color', 'fill', 'rotate', 'transform', 'show'];
+        this.readableProperties = ['id', 'type'];
 
         // 保存config中声明的事件
         for(let prop in config) {
@@ -174,97 +201,11 @@ export class Shape extends Base {
         }
     }
 
-
-    /** 基本属性 */
-    path(): Path2D {
-        return this._path;
-    }
-
-    x(x?: number): number | Shape {
-        if(x !== undefined && typeof x === 'number') {
-            this._x = x;
-            this.drawPath();
-            this._isMount && Broadcast.notify('update');
-            return this;
-        }
-        else {
-            return this._x;
-        }
-    }
-
-    y(y?: number): number | Shape {
-        if(y !== undefined && typeof y === 'number') {
-            this._y = y;
-            this.drawPath();
-            this._isMount && Broadcast.notify('update');
-            return this;
-        }
-        else {
-            return this._y;
-        }
-    }
-
-    center(center?: Array<number>): Array<number> | Shape {
-        if(center !== undefined && center instanceof Array) {
-            this._center = center;
-            return this;
-        }
-        else {
-            return this._center;
-        }
-    }
-
-    color(color?: string): string | Shape {
-        if(color !== undefined && typeof color === 'string') {
-            this._color = color;
-            this._isMount && Broadcast.notify('update');
-            return this;
-        }
-        else {
-            return this._color;
-        }
-    }
-
-    fill(fill?: boolean): boolean | Shape {
-        if(fill !== undefined && typeof fill === 'boolean') {
-            this._fill = fill;
-            this._isMount && Broadcast.notify('update');
-            return this;
-        }
-        else {
-            return this._fill;
-        }
-    }
-
-    rotate(deg?: number): number | Shape {
-        if(deg !== undefined && typeof deg === 'number') {
-            this._rotate = deg;
-            this.generatePath();
-            this._isMount && Broadcast.notify('update');
-            return this;
-        }
-        else {
-            return this._rotate;
-        }
-    }
-
-    transform(trans: Array<Array<number>>): Array<Array<number>> | Shape {
-        if(trans !== undefined && trans instanceof Array) {
-            this._transform = trans;
-            this.generatePath();
-            this._isMount && Broadcast.notify('update');
-            return this;
-        }
-        else {
-            return this._transform;
-        }
-    }
-
     // 获取基本属性
     protected getBaseConfig() {
         return {
             pin: [this._x, this._y],
-            center: this.center,
+            center: this._center,
             color: this._color,
             fill: this._fill,
             rotate: this._rotate,
@@ -277,48 +218,90 @@ export class Shape extends Base {
         };
     }
 
+    /** ------------------------path---------------------- */
 
-    /** 事件 */
+    getPath(): Path2D {
+        return this.path;
+    }
+
+    setPath(path: Path2D) {
+        this.path = path;
+    }
+
+
+    /**--------------------重载的setter-------------------- */
+
+    // 重载setter（x）
+    setX(x: number) {
+        let d = x - this._x;
+        this._x = x;
+        this._center[0] = this._center[0] + d;
+
+        this.drawPath().rotatePath().transFormPath();
+    }
+
+    // 重载setter（y）
+    setY(y: number) {
+        let d = y - this._y;
+        this._y = y;
+        this._center[1] = this._center[1] + d;
+
+        this.drawPath().rotatePath().transFormPath();
+    }
+
+    /** -------------------事件---------------------------- */
+
     // 只有shape和composite类型有该方法
     bind(event: string, fn: (e: event) => {} | keyBoardEvent) {
         this.event[event] = fn;;
     }
 
 
-    /** 动画 */
+    /** -------------------动画---------------------------- */
+
     animate(o: Shape) {}
     start(fn: Function) {}
     end(fn: Function) {}
 
-    // 定义path2d路径(需重载)
-    drawPath(): Shape { return this; }
 
-    // 生成path2d路径
-    generatePath() {
+    /** -------------------PATH2D路径---------------------------- */
+
+
+    // 定义path2D路径(需重载)
+    drawPath(shape?): Shape { return this; }
+
+    // 旋转path2D路径
+    rotatePath(shape?): Shape {
+        // circle和ellipse不使用该方法
+        if(this._type === 'circle' || this._type === 'ellipse') return this;
+
         let tPath = new Path2D();
-        
-        tPath.addPath(
-            this._path, 
-            matrixMulti(
-                rotate(Matrix.rotateMatrix, this._center, this._rotate), 
-                transform(Matrix.transformMatrix, this._center, this._transform), 
-                Matrix.resMatrix
-            )
-        );
-        
-        this._path = tPath;
+        tPath.addPath(this.path, rotate(Matrix.rotateMatrix, this._center, this._rotate));
+        this.path = tPath;
+
+        return this;
     }
 
-    draw(ctx: CanvasRenderingContext2D) {
-        if(!this.show()) return; 
+    // 形变path2D路径
+    transFormPath(shape?): Shape {
+        let tPath = new Path2D();
+        tPath.addPath(this.path, transform(Matrix.transformMatrix, this._center, this._transform));
+        this.path = tPath;
+
+        return this;
+    }
+
+    // 渲染path2D路径
+    renderPath(ctx: CanvasRenderingContext2D) {
+        if(!this.attr('show')) return; 
 
         if(this._fill) {
             ctx.fillStyle = this._color;
-            ctx.fill(this._path);
+            ctx.fill(this.path);
         }
         else {
             ctx.strokeStyle = this._color;
-            ctx.stroke(this._path);
+            ctx.stroke(this.path);
         }
     }
 }

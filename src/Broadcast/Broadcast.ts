@@ -8,7 +8,7 @@ export default {
     },
 
     notify(tag: string, para?: any) {
-        this.listenerTable[tag](para);
+        return this.listenerTable[tag](para);
     }
 }
 

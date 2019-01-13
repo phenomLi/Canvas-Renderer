@@ -84,6 +84,8 @@ class init {
 
         //初始化广播器(监听者：图形对象堆的界面重刷方法)
         Broadcast.addListener('update', this.shapeHeap.update.bind(this.shapeHeap));
+        //初始化广播器(监听者：图形对象堆的界面克隆方法)
+        Broadcast.addListener('clone', this.shapeHeap.clone.bind(this.shapeHeap));
         //初始化广播器(监听者：图形对象堆的界面重刷方法)
         Broadcast.addListener('event', this.eventSystem.addEvent.bind(this.eventSystem));
 

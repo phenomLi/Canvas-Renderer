@@ -31,35 +31,36 @@ const p = new prender(document.getElementById("canvas"), {
 });
 
 
-const cu = new p.shapes.Custom({
+const cu = new p.shapes.RoundRect({
     pin: [200, 200],
-    center: [280, 280],
     color: 'green',
-    rotate: 45,
-    draw(ctx, line) {
-        line
-        .start([0, 30])
-        .bee([[0, 130]])
-        .arc(30, 180, 90)
-        .bee([[130, 160]])
-        .arc(30, 90, 0)
-        .bee([[160, 30]])
-        .arc(30, 0, -90)
-        .bee([[30, 0]])
-        .arc(30, -90, -180)
-        .end();
-    }
+    //rotate: 15,
+    round: 30,
+    edge: [160, 160],
+    // draw(path, line) {
+    //     line
+    //     .bee([[0, 130]])
+    //     .arc(30, 180, 90)
+    //     .bee([[130, 160]])
+    //     .arc(30, 90, 0)
+    //     .bee([[160, 30]])
+    //     .arc(30, 0, -90)
+    //     .bee([[30, 0]])
+    //     .arc(30, -90, -180)
+    //     .end();
+    // }
 });
 
 
-const s1 = new p.shapes.Rectangle({
+const r1 = new p.shapes.Rectangle({
     pin: [50, 50],
     edge: [90, 120],
     fill: true,
+    rotate: 90,
     color: 'blue'
 });
 
-const s2 = new p.shapes.Rectangle({
+const r2 = new p.shapes.Rectangle({
     pin: [140, 50],
     edge: [120, 90],
     fill: true,
@@ -67,28 +68,105 @@ const s2 = new p.shapes.Rectangle({
 });
 
 
-const c = new p.shapes.Composite({
-    pin: [50, 50],
-    center: [155, 85],
-    rotate: 45
+const t1 = new p.shapes.Triangle({
+    pin: [310, 100],
+    edge: 100,
+    rotate: 45,
+    fill: true,
+    color: 'pink'
 });
 
-c.join(s1);
-c.join(s2);
+
+const cir1 = new p.shapes.Circle({
+    pin: [310, 100],
+    radius: 50,
+    fill: true,
+    color: 'red'
+});
+
+
+const c1 = new p.shapes.Composite({
+    pin: [50, 50],
+    center: [155, 85]
+});
+
+
+c1.join(r1);
+c1.join(r2);
+
+
+const c2 = new p.shapes.Composite({
+    pin: [50, 50],
+    center: [215, 85],
+    shapes: [c1, cir1]
+});
 
 
 
-p.append(c);
 
-// c.x(60).y(80);
+p.append(c2);
+p.append(t1);
+p.append(cir1);
+p.append(cu);
 
-// s1.y(60);
-// s2.x(200);
+r1.attr('y', 200);
+
+
+//c2.attr('rotate', 90);
 
 console.log('图形数量:' + p.getShapesCount());
 
 
 
 </script>
+<!-- <script>
+
+function rotate(matrix, center, deg) {
+    if(deg === 0) return null;
+
+    let d = deg/180*Math.PI;
+
+    matrix.a = Math.cos(d); matrix.c = -1*Math.sin(d);
+    matrix.b = Math.sin(d); matrix.d = Math.cos(d);
+    matrix.e = -center[0]*Math.cos(d) + center[1]*Math.sin(d) + center[0];
+    matrix.f = -center[0]*Math.sin(d) - center[1]*Math.cos(d) + center[1];  
+
+    return matrix;
+}
+
+
+// 进行形变操作
+function transform(matrix, center, matrixArray) {
+    if(matrixArray.length === 0) return null;
+
+    matrix.a = matrixArray[0][0]; matrix.c = matrixArray[0][1]; 
+    matrix.b = matrixArray[1][0]; matrix.d = matrixArray[1][1];   
+    matrix.e = -center[0]*matrixArray[0][0] - center[1]*matrixArray[0][1] + center[0];
+    matrix.f = -center[0]*matrixArray[1][0] - center[1]*matrixArray[1][1] + center[1];
+    
+    return matrix;
+}
+
+
+const can = document.getElementById('canvas'),
+      ctx = can.getContext('2d'),
+      m = document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix();
+
+let p1 = new Path2D(),
+    p2 = new Path2D(),
+    p3 = new Path2D();
+
+    // m.e = 100;
+    // m.f = 100;
+
+p1.rect(100, 100, 100, 100);
+
+p2.addPath(p1, m);
+p3.addPath(p2, transform(m, [150, 150], [[0.5, 0], [0, 0.5]]));
+
+ctx.fillStyle = 'green';
+ctx.fill(p2);
+
+</script> -->
 </body>
 </html>

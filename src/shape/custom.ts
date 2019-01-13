@@ -1,6 +1,5 @@
 import { Shape, shapeConfig } from './BaseShape';
 import { line } from './Line';
-import { rotate } from '../render/util';
 
 class customConfig extends shapeConfig {
     center: Array<number>;
@@ -20,7 +19,8 @@ export class Custom extends Shape {
         this._center = config.center;
         this._draw = config.draw;
 
-        this.drawPath().generatePath();
+        this.initSetter();
+        this.drawPath().rotatePath().transFormPath();
     }
 
     config() {
@@ -31,7 +31,8 @@ export class Custom extends Shape {
     }
 
     drawPath(): Shape {
-        this._draw(this._path, line.init(this._path, [this._x, this._y]));
+        this.path = new Path2D();
+        this._draw(this.path, line.init(this.path, [this._x, this._y]));
         return this;
     }
 }

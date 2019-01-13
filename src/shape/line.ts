@@ -20,15 +20,10 @@ class Line {
         this.endY = this.oY;
         this.tPath = new Path2D();
 
-        return this;
-    }
-
-    start(): Line {
         Matrix.translateMatrix.e = this.oX;
         Matrix.translateMatrix.f = this.oY;
 
-        this.path.addPath(this.tPath, Matrix.translateMatrix);
-        this.path.moveTo(this.endX, this.endY);
+        this.tPath.moveTo(0, 0);
 
         return this;
     }
@@ -36,7 +31,7 @@ class Line {
     // 直线
     bee(path: Array<Array<number>>): Line {
         for(let i = 0; i < path.length; i ++) {
-            this.path.lineTo(path[i][0], path[i][1]);
+            this.tPath.lineTo(path[i][0], path[i][1]);
         }
 
         this.endX = path[path.length - 1][0];
@@ -47,8 +42,8 @@ class Line {
 
     // 贝塞尔曲线
     bez(ctrlPoint1: Array<number>, ctrlPoint2: Array<number>, endPoint: Array<number>) {
-        this.path.moveTo(this.endX, this.endY);
-        this.path.bezierCurveTo(ctrlPoint1[0], ctrlPoint1[1], ctrlPoint2[0], ctrlPoint2[1], endPoint[0], endPoint[1]);
+        this.tPath.moveTo(this.endX, this.endY);
+        this.tPath.bezierCurveTo(ctrlPoint1[0], ctrlPoint1[1], ctrlPoint2[0], ctrlPoint2[1], endPoint[0], endPoint[1]);
         this.endX = endPoint[0]; this.endY = endPoint[1];
     }
 
@@ -60,7 +55,7 @@ class Line {
         xCenter = this.endX - radius*Math.cos((360 - startDeg)/180*Math.PI);
         yCenter = this.endY + radius*Math.sin((360 - startDeg)/180*Math.PI);
 
-        this.path.arc(xCenter, yCenter, radius, (startDeg)/180*Math.PI, endDeg/180*Math.PI, clockWise);
+        this.tPath.arc(xCenter, yCenter, radius, (startDeg)/180*Math.PI, endDeg/180*Math.PI, clockWise);
 
         // 将弧的圆心进行位移，确保弧的末尾端点和下一段直线的开端可以衔接
         this.endX = xCenter - radius*Math.cos((360 - endDeg)/180*Math.PI);
@@ -70,6 +65,7 @@ class Line {
     }
 
     end() {
+        this.path.addPath(this.tPath, Matrix.translateMatrix);
         Matrix.translateMatrix.e = Matrix.translateMatrix.f = 0;
     } 
 }

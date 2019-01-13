@@ -6,6 +6,7 @@ import { Triangle } from '../shape/Triangle';
 import { Circle } from '../shape/Circle';
 import { Rectangle } from '../shape/Rectangle';
 import { Ellipse } from './../shape/Ellipse';
+import { RoundRect } from './../shape/RoundRect';
 import { Group } from '../shape/Group';
 import { Composite } from '../shape/Composite';
 
@@ -16,8 +17,7 @@ export type ShapeType = Shape | Group | Composite;
 export const Matrix = {
     rotateMatrix: document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix(),
     transformMatrix: document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix(),
-    translateMatrix: document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix(),
-    resMatrix: document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix()
+    translateMatrix: document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix()
 };
 
 
@@ -57,8 +57,8 @@ export class shapeHeap {
     public append(shape: ShapeType) {
         this.shapeHeapArray.push(shape);
 
-        // 更改图形isMounted状态
-        shape.isMount(true);
+        // 更改图形toggleMounted状态
+        shape.toggleMount(true);
         // 更新画布中图形数量
         this.count += shape.getCount();
 
@@ -66,16 +66,16 @@ export class shapeHeap {
     }
 
     public remove(shape: ShapeType) {
-        let id = shape.id();
+        let id = shape.attr('id');
         // 将要remove的图形在shapeHeapArray中去除
         this.shapeHeapArray.map((item, index) => {
-            if(item.id() === id) {
+            if(item.attr('id') === id) {
                 this.shapeHeapArray.splice(index, 1);
             }
         });
 
-        // 更改图形isMounted状态
-        shape.isMount(false);
+        // 更改图形toggleMounted状态
+        shape.toggleMount(false);
         // 更新画布中图形数量
         this.count -= shape.getCount();
 
@@ -83,7 +83,7 @@ export class shapeHeap {
     }
 
     public clone(shape: ShapeType): ShapeType {
-        if(shape.type() === 'group') {
+        if(shape.attr('type') === 'group') {
             let tempGroup = new shapes.Group((<Group>shape).config());
 
             DFS((<Group>shape).getShapeList(), item => {
@@ -92,7 +92,7 @@ export class shapeHeap {
 
             return tempGroup;
         }
-        else if(shape.type() === 'composite') {
+        else if(shape.attr('type') === 'composite') {
             let tempComposite = new shapes.Composite((<Composite>shape).config());
 
             DFS((<Composite>shape).getShapeList(), item => {
@@ -102,13 +102,13 @@ export class shapeHeap {
             return tempComposite;
         }
         else {
-            return new shapes[shape.type()](shape.config());
+            return new shapes[shape.attr('type')](shape.config());
         }
     }
 
     public clear() {
-        DFS(this.shapeHeapArray, item => {
-            item.isMount(false);
+        this.shapeHeapArray.map(item => {
+            item.toggleMount(false);
         });
 
         this.shapeHeapArray = [];
@@ -137,10 +137,10 @@ export class shapeHeap {
         this.ctx.clearRect(0, 0, this.canvasInfo.width, this.canvasInfo.height);
 
         this.shapeHeapArray.map(item => {
-            if(!item.show()) return; 
+            if(!item.attr('show')) return; 
 
             this.ctx.save();
-            item.draw(this.ctx);
+            item.renderPath(this.ctx);
             this.ctx.restore();
         });
     }
@@ -156,7 +156,8 @@ export const shapes = {
     Triangle,
     Group,
     Composite,
-    Ellipse
+    Ellipse,
+    RoundRect,
 }
 
 // 实用函数集合

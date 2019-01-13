@@ -1,5 +1,5 @@
 import { Shape, shapeConfig } from './BaseShape';
-import Broadcast from './../Broadcast/Broadcast';
+import { line } from './Line';
 
 
 class triangleConfig extends shapeConfig {
@@ -21,7 +21,10 @@ export class Triangle extends Shape {
         this.height = Math.sqrt(this._edge*this._edge - this.midEdge*this.midEdge);
         this._center = [this._x, this._y + this.height/2];
 
-        this.drawPath().generatePath();
+        this.writableProperties.push('edge');
+
+        this.initSetter();
+        this.drawPath().rotatePath().transFormPath();
     }
 
     config() {
@@ -30,24 +33,13 @@ export class Triangle extends Shape {
             edge: this._edge
         };
     }
-
-    edge(edge?: number): number | Shape {
-        if(edge !== undefined && typeof edge === 'number') {
-            this._edge = edge;
-            this.drawPath();
-            this._isMount && Broadcast.notify('update');
-            return this;
-        }
-        else {
-            return this._edge;
-        }
-    }
     
     drawPath(): Shape {
-        this._path.moveTo(this._x, this._y);
-        this._path.lineTo(this._x - this.midEdge, this._y + this.height);
-        this._path.lineTo(this._x + this.midEdge, this._y + this.height);
-
+        this.path = new Path2D();
+        line
+        .init(this.path, [this._x, this._y])
+        .bee([[-this.midEdge, this.height], [this.midEdge, this.height], [0, 0]])
+        .end();
         return this;
     }
 } 

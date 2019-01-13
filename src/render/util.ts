@@ -6,10 +6,10 @@ import { Shape } from '../shape/BaseShape';
 
 
 // 集合类图形深度优先搜索
-export function DFS(shapeList: Array<ShapeType>, fn: Function) {
+export function DFS(shapeList: Array<ShapeType>, fn: Function, flag: boolean = true) {
     shapeList.map(item => {
-        if(item.type() === 'group' || item.type() === 'composite') {
-            fn(item);
+        if(item.attr('type') === 'group' || item.attr('type') === 'composite') {
+            flag && fn(item);
             DFS((<Group | Composite>item).getShapeList(), fn);
         }
         else {
@@ -29,8 +29,6 @@ export function calcCenter(path: Array<Array<number>>): Array<number> {
 
 // 进行旋转操作
 export function rotate(matrix: DOMMatrix, center: Array<number>, deg: number): DOMMatrix {
-    if(deg === 0) return null;
-
     let d = deg/180*Math.PI;
 
     matrix.a = Math.cos(d); matrix.c = -1*Math.sin(d);

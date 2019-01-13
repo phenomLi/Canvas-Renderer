@@ -1,5 +1,5 @@
 import { Shape, shapeConfig } from './BaseShape';
-import Broadcast from './../Broadcast/Broadcast'; 
+
 
 
 class ellipseConfig extends shapeConfig {
@@ -8,53 +8,48 @@ class ellipseConfig extends shapeConfig {
 
 
 export class Ellipse extends Shape {
-    private radiusX: number;
-    private radiusY: number;
+    private _radiusX: number;
+    private _radiusY: number;
 
     constructor(config: ellipseConfig) {
         super(config, 'ellipse');
 
         this._center = [this._x, this._y];
-        this.radiusX = config.radius[0];
-        this.radiusY = config.radius[1];
+        this._radiusX = config.radius[0];
+        this._radiusY = config.radius[1];
 
-        // 描绘路径,不渲染
-        this.drawPath().generatePath();
+        this.initSetter();
+        this.drawPath().transFormPath();
     }
 
     config() {
         return {
             ...this.getBaseConfig(),
-            radius: [this.radiusX, this.radiusY]
+            radius: [this._radiusX, this._radiusY]
         };
     }
 
-    rX(rx?: number): number | Shape {
-        if(rx !== undefined && typeof rx === 'number') {
-            this.radiusX = rx;
-            this.drawPath();
-            this._isMount && Broadcast.notify('update');
-            return this;
-        }
-        else {
-            return this.radiusX;
-        }
+    // 新增setter（radiusX）
+    setRadiusX(rx: number) {
+        this._radiusX = rx;
+        this.drawPath().transFormPath();
     }
 
-    rY(ry?: number): number | Shape {
-        if(ry !== undefined && typeof ry === 'number') {
-            this.radiusY = ry;
-            this.drawPath();
-            this._isMount && Broadcast.notify('update');
-            return this;
-        }
-        else {
-            return this.radiusY;
-        }
+    // 新增setter（radiusY）
+    setRadiusY(ry: number) {
+        this._radiusY = ry;
+        this.drawPath().transFormPath();
+    }
+
+    // 重载setter（rotate）
+    setRotate(deg: number) {
+        this._rotate = deg;
+        this.drawPath().transFormPath();
     }
 
     drawPath(): Shape {
-        this._path.ellipse(this._x, this._y, this.radiusX, this.radiusY, this._rotate/180*Math.PI, 0, 2*Math.PI, true);
+        this.path = new Path2D();
+        this.path.ellipse(this._x, this._y, this._radiusX, this._radiusY, this._rotate/180*Math.PI, 0, 2*Math.PI, true);
         return this;
     }
 }

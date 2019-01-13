@@ -1,5 +1,5 @@
 import { Shape, shapeConfig } from './BaseShape';
-import Broadcast from './../Broadcast/Broadcast';
+import { line } from './Line';
 
 
 class rectangleConfig extends shapeConfig {
@@ -17,9 +17,13 @@ export class Rectangle extends Shape {
 
         this._width = config.edge[0];
         this._height = config.edge[1];
+        this._center = [this._x + this._width/2, this._y + this._height/2];
 
-        // 描绘路径,不渲染
-        this.drawPath().generatePath();
+        this.writableProperties.push('width');
+        this.writableProperties.push('height');
+
+        this.initSetter();
+        this.drawPath().rotatePath().transFormPath();
     }
 
     config() {
@@ -29,34 +33,12 @@ export class Rectangle extends Shape {
         };
     }
 
-    width(width?: number): number | Shape {
-        if(width !== undefined && typeof width === 'number') {
-            this._width = width;
-            this.drawPath();
-            this._isMount && Broadcast.notify('update');
-            return this;
-        }
-        else {
-            return this._width;
-        }
-    }
-
-    height(height?: number): number | Shape {
-        if(height !== undefined && typeof height === 'number') {
-            this._height = height;
-            this.drawPath();
-            this._isMount && Broadcast.notify('update');
-            return this;
-        }
-        else {
-            return this._height;
-        }
-    }
-
     drawPath(): Shape {
-        this._center = [this._x + this._width/2, this._y + this._height/2];
-        this._path.rect(this._x, this._y, this._width, this._height);
-
+        this.path = new Path2D();
+        line
+        .init(this.path, [this._x, this._y])
+        .bee([[this._width, 0], [this._width, this._height], [0, this._height], [0, 0]])
+        .end();
         return this;
     }
 } 
