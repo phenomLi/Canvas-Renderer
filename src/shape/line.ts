@@ -64,6 +64,12 @@ class Line {
         return this;
     }
 
+    move(x: number, y: number) {
+        this.tPath.moveTo(x, y);
+        this.endX = x;
+        this.endY = y;
+    }
+
     end() {
         this.path.addPath(this.tPath, Matrix.translateMatrix);
         Matrix.translateMatrix.e = Matrix.translateMatrix.f = 0;

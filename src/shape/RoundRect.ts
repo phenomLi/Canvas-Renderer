@@ -15,12 +15,12 @@ export class RoundRect extends Shape {
     private _round: number;
 
     constructor(config: roundRectConfig) {
-        super(config, 'roundrect');
+        super(config, 'Roundrect');
 
         this._width = config.edge[0];
         this._height = config.edge[1];
         this._round = config.round;
-        this._center = [this._x + this._width/2, this._y + this._height/2];
+        this._center = [this._x + this._width/2, this._y + this._height/2 + this._round];
 
         this.writableProperties.push('width');
         this.writableProperties.push('height');

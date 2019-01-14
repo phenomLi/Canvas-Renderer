@@ -1,6 +1,7 @@
 import { Base } from './BaseShape';
 import Broadcast from './../Broadcast/Broadcast';
 import { ShapeType } from '../render/core';
+import { DFS } from '../util/util';
 
 
 class groupConfig {
@@ -14,13 +15,15 @@ export class Group extends Base {
     private shapeList: Array<ShapeType>;
 
     constructor(config: groupConfig) {
-        super(config, 'group');
+        super(config, 'Group');
         
+        this._mounted = config !== undefined? config.mounted: () => {};
+        this._removed = config !== undefined? config.removed: () => {};
+
         this.count = 0;
-        this.shapeList = new Array();
+        this.shapeList = [];
 
         this.writableProperties = ['show'];
-        this.readableProperties = ['id', 'type', 'show'];
 
         if(config && config.shapes) {
             config.shapes.map(item => {
@@ -51,12 +54,17 @@ export class Group extends Base {
         return this.shapeList;
     }
 
-    append(shape: ShapeType) {
-        this.shapeList.push(shape);
+    append(shape: ShapeType | Array<ShapeType>) {
+        if(shape instanceof Array) {
+            shape.map(item => this.append(item));
+        }
+        else {
+            this.shapeList.push(shape);
         
-        shape.attr('type') === 'group'? this.count += (<Group>shape).getCount(): this.count += 1;
+            this.count += (<Group>shape).getCount();
 
-        this.isMount && Broadcast.notify('update');
+            this.isMount && Broadcast.notify('update');
+        }
     }
 
     remove(shape: ShapeType) {
@@ -68,29 +76,20 @@ export class Group extends Base {
             }
         });
 
-        shape.attr('type') === 'group'? this.count -= (<Group>shape).getCount(): this.count -= 1;
+        this.count -= (<Group>shape).getCount();
 
         this.isMount && Broadcast.notify('update');
     }
 
-    
-    render(ctx: CanvasRenderingContext2D, shapeList: Array<ShapeType>) {
-        shapeList.map(item => {
+    renderPath(ctx: CanvasRenderingContext2D) {
+        DFS(this.shapeList, item => {
             if(!item.attr('show')) return; 
-
-            if(item.attr('type') === 'group') {
-                this.render(ctx, (<Group>item).getShapeList());
-            }
             else {
                 ctx.save();
                 item.renderPath(ctx);
                 ctx.restore();
             }
-        });
-    }
-
-    renderPath(ctx: CanvasRenderingContext2D) {
-        this.render(ctx, this.shapeList);
+        }, false);
     }
 }
 

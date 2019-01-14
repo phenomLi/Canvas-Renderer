@@ -1,4 +1,4 @@
-import { DFS, isInShape, rotate, transform } from './util';
+import { DFS, isInShape, rotate, transform } from '../util/util';
 import Broadcast from './../Broadcast/Broadcast';
 import { Shape } from '../shape/BaseShape';
 import { Custom } from '../shape/Custom';
@@ -83,7 +83,7 @@ export class shapeHeap {
     }
 
     public clone(shape: ShapeType): ShapeType {
-        if(shape.attr('type') === 'group') {
+        if(shape.attr('type') === 'Group') {
             let tempGroup = new shapes.Group((<Group>shape).config());
 
             DFS((<Group>shape).getShapeList(), item => {
@@ -92,7 +92,7 @@ export class shapeHeap {
 
             return tempGroup;
         }
-        else if(shape.attr('type') === 'composite') {
+        else if(shape.attr('type') === 'Composite') {
             let tempComposite = new shapes.Composite((<Composite>shape).config());
 
             DFS((<Composite>shape).getShapeList(), item => {
@@ -162,9 +162,7 @@ export const shapes = {
 
 // 实用函数集合
 export const utils = {
-    isInShape,
-    rotate,
-    transform
+    isInShape
 }
 
 

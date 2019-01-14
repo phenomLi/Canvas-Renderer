@@ -12,7 +12,7 @@ export class Ellipse extends Shape {
     private _radiusY: number;
 
     constructor(config: ellipseConfig) {
-        super(config, 'ellipse');
+        super(config, 'Ellipse');
 
         this._center = [this._x, this._y];
         this._radiusX = config.radius[0];

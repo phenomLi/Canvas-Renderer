@@ -1,12 +1,13 @@
 import { Shape, shapeConfig } from './BaseShape';
 import Broadcast from './../Broadcast/Broadcast';
-import { rotate, DFS, transform } from '../render/util';
+import { rotate, DFS, transform } from '../util/util';
 import { Matrix } from '../render/core';
 
 
 class compositeConfig extends shapeConfig {
     center: Array<number>;
     shapes: Array<Shape | Composite>;
+    deep: boolean;
 }
 
 
@@ -19,32 +20,41 @@ class compositeConfig extends shapeConfig {
 
 export class Composite extends Shape {
     private shapeList: Array<Shape | Composite>;
+    private deep: boolean;
 
     constructor(config: compositeConfig) {
-        super(config, 'composite');
+        super(config, 'Composite');
 
+        this.deep = config.deep === undefined? true: config.deep;
         this._center = config.center;
+
+        this.writableProperties = ['x', 'y', 'center', 'rotate', 'transform', 'show'];
+
         this.shapeList = [];
 
         if(config && config.shapes) {
             config.shapes.map(item => {
-                this.join(item, true);
+                this.join(item, this.deep);
             });
         }
 
         this.initSetter();
     } 
 
-    join(shape: Shape | Composite, deep?: boolean) {
-        if(shape.attr('type') === 'group') {
-            console.warn('group类型不能加入composite');
-            return;
+    join(shape: Shape | Composite | Array<Shape | Composite>, deep?: boolean) {
+        if(shape instanceof Array) {
+            shape.map(item => this.join(item, deep));
         }
+        else {
+            if(shape.attr('type') === 'Group') {
+                console.warn('group类型不能加入composite');
+                return;
+            }
+    
+            this.shapeList.push(this.shapeProcessor(deep? Broadcast.notify('clone', shape): shape));
 
-        //this.shapeList.push(this.shapeProcessor(deep? Broadcast.notify('clone', shape): shape));
-        this.shapeList.push(this.shapeProcessor(shape));
-
-        this.isMount && Broadcast.notify('update');
+            this.isMount && Broadcast.notify('update');
+        }
     }
 
     config() {
@@ -62,6 +72,7 @@ export class Composite extends Shape {
 
         this.shapeList.map(item => {  
             item.attr('x', item.attr('x') + d);
+            this.shapeProcessor(item);
         });
     }
 
@@ -73,6 +84,7 @@ export class Composite extends Shape {
 
         this.shapeList.map(item => {  
             item.attr('y', item.attr('y') + d);
+            this.shapeProcessor(item);
         });
     }
 
@@ -113,7 +125,7 @@ export class Composite extends Shape {
         return this.shapeList;
     }
     
-    // 处理一下新加进来的shape
+    // 处理一下新加进来的shape(为新shape加上此合成图形的旋转和形变属性)
     shapeProcessor(shape: Shape | Composite): Shape {
         // 对加入的每个图形进行旋转操作
         this._rotate && this.rotatePath(shape);
@@ -124,7 +136,7 @@ export class Composite extends Shape {
 
     // 以合成类型图形为中心对每个字图形进行旋转
     rotatePath(shape: Shape | Composite): Shape {
-        if(shape.attr('type') === 'composite') {
+        if(shape.attr('type') === 'Composite') {
             DFS(shape.getShapeList(), item => {
                 let tPath = new Path2D();
                 tPath.addPath(item.getPath(), rotate(Matrix.rotateMatrix, this._center, this._rotate));
@@ -142,7 +154,7 @@ export class Composite extends Shape {
 
     // 以合成类型图形为中心对每个字图形进行形变
     transFormPath(shape: Shape | Composite): Shape {
-        if(shape.attr('type') === 'composite') {
+        if(shape.attr('type') === 'Composite') {
             DFS(shape.getShapeList(), item => {
                 let tPath = new Path2D();
                 tPath.addPath(item.getPath(), transform(Matrix.transformMatrix, this._center, this._transform));
@@ -159,7 +171,7 @@ export class Composite extends Shape {
     }
 
     renderPath(ctx: CanvasRenderingContext2D) {
-        DFS(this.getShapeList(), item => {
+        DFS(this.shapeList, item => {
             ctx.save();
             item.renderPath(ctx);
             ctx.restore();

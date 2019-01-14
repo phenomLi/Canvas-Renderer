@@ -1,9 +1,9 @@
 import { event, keyBoardEvent } from '../event/core';
-import { DFS, matrixMulti, rotate, transform } from '../render/util';
+import { DFS, rotate, transform } from '../util/util';
 import { ShapeType, Matrix } from '../render/core';
+import { Custom } from './Custom';
 import Broadcast from './../Broadcast/Broadcast';
-import { Group } from './Group';
-import { Composite } from './composite';
+
 
 export class shapeConfig {
     // 位置
@@ -12,6 +12,8 @@ export class shapeConfig {
     color: string;
     // 是否填充
     fill: boolean;
+    //透明度
+    opacity: number;
     // 旋转
     rotate: number;
     // 形变
@@ -41,11 +43,12 @@ export class Base {
     protected _removed: Function;
 
     protected isMount: boolean;
-    protected event;
 
     protected writableProperties: Array<string>;
     protected readonlyProperties: Array<string>;
     protected readableProperties: Array<string>;
+    // 保存更改后不用重新绘制路径的属性
+    protected notRePathProperties: Array<string>;
 
     protected count: number;
 
@@ -53,15 +56,12 @@ export class Base {
         this._id = Symbol();
         this._type = type;
         this._show = true;
-        this._mounted = config !== undefined? config.mounted: () => {};
-        this._removed = config !== undefined? config.removed: () => {};
 
         this.isMount = false;
         this.count = 1;
-        this.event = {};
 
         this.writableProperties = [];
-        this.readonlyProperties = [];
+        this.readonlyProperties = ['id', 'type'];
         this.readableProperties = [];
     }
     
@@ -76,7 +76,7 @@ export class Base {
                 this[`set${upperCaseAttr}`] = function(val) {
                     this[`_${attr}`] = val;
                     
-                    if(attr !== 'center' && attr !== 'show') {
+                    if(!this.notRePathProperties.includes(attr)) {
                         this.drawPath().rotatePath().transFormPath();
                     }
                 }
@@ -85,7 +85,7 @@ export class Base {
     }
 
     // 属性get、set
-    attr(attr: string, val?: any): any | Base {
+    public attr(attr: string, val?: any): any | Base {
         if(!this.readableProperties.includes(attr)) {
             console.warn(`${attr}属性不存在`);
             return;
@@ -112,7 +112,7 @@ export class Base {
         // 更改挂载状态后执行钩子函数
         isMount? this.mounted(): this.removed();
 
-        if(this.attr('type') === 'group' || this.attr('type') === 'composite') {
+        if(this.attr('type') === 'Group' || this.attr('type') === 'Composite') {
             DFS(this.getShapeList(), item => {
                 item.toggleMount(isMount);
                 // 从画布中移除后执行钩子函数
@@ -122,34 +122,34 @@ export class Base {
     }
     
     // 需重载函数: 返回图形数组(只有group和composite有该方法)
-    getShapeList(): Array<ShapeType> { return null; }
-
-    // 需重载函数: 返回配置项
-    config() {};
+    public getShapeList(): Array<ShapeType> { return null; }
 
     // 返回图形数量
     getCount(): number {
         return this.count;
     }
 
-    /** 状态钩子 */
-    mounted() {
-        // 当图形挂载到画布上时，绑定事件
-        for(let prop in this.event) {
-            Broadcast.notify('event', {
-                shape: this,
-                eventName: prop,
-                fn: this.event[prop]
-            });
-        }
+    // 需重载函数: 返回配置项
+    config() {};
 
-        this._mounted && typeof this._mounted === 'function' && this._mounted();
+
+
+    /**------------------------- 状态钩子----------------------- */
+
+    mounted() {
+        if(this._mounted && typeof this._mounted === 'function') {
+            this._mounted();
+        } 
     }
 
     removed() {
-        this._removed && typeof this._removed === 'function' && this._removed();
+        if(this._removed && typeof this._removed === 'function') {
+            this._removed();
+        }
     }
 
+
+    /**-------------------------PATH-------------------------- */
 
     // 定义path2D路径(需重载)
     drawPath(): Base { return null; }
@@ -168,15 +168,21 @@ export class Base {
 
 // 图形基类
 export class Shape extends Base {
-    protected path: Path2D;
     protected _x: number;
     protected _y: number;
     protected _center: Array<number>;
     protected _color: string;
     protected _fill: boolean;
+    protected _opacity: number;
     protected _rotate: number;
     protected _transform: Array<Array<number>>;
+    protected _fillRule: boolean;
+
+    protected path: Path2D;
     protected originEventName;
+
+    // 鼠标是否在当前图形里面
+    public isMouseIn: boolean;
 
     constructor(config: shapeConfig, type: string) {
         super(config, type);
@@ -185,12 +191,20 @@ export class Shape extends Base {
         this._y = config.pin[1];
         this._color = config.color;
         this._fill = (config.fill === undefined)? true: config.fill;
+        this._opacity = config.opacity || 1;
         this._rotate = config.rotate || 0;
         this._transform = config.transform || [];
+        this._mounted = config.mounted || (() => {});
+        this._removed = config.removed || (() => {});
+        this._fillRule = true;
+        
+        this.isMouseIn = false;
         this.originEventName = {};
 
-        this.writableProperties = ['x', 'y', 'center', 'color', 'fill', 'rotate', 'transform', 'show'];
-        this.readableProperties = ['id', 'type'];
+        this.writableProperties = ['x', 'y', 'color', 'fill', 'opacity', 'rotate', 'transform', 'show'];
+        this.readonlyProperties.push('center');
+
+        this.notRePathProperties = ['color', 'fill', 'opacity', 'show'];
 
         // 保存config中声明的事件
         for(let prop in config) {
@@ -213,8 +227,8 @@ export class Shape extends Base {
             ...this.originEventName,
 
             // hook
-            mounted: this.mounted,
-            removed: this.removed
+            mounted: this._mounted,
+            removed: this._removed
         };
     }
 
@@ -251,9 +265,13 @@ export class Shape extends Base {
 
     /** -------------------事件---------------------------- */
 
-    // 只有shape和composite类型有该方法
+    // 绑定事件，只有shape和composite类型有该方法
     bind(event: string, fn: (e: event) => {} | keyBoardEvent) {
-        this.event[event] = fn;;
+        Broadcast.notify('event', {
+            shape: this,
+            eventName: event,
+            fn: fn.bind(this)
+        });
     }
 
 
@@ -295,9 +313,11 @@ export class Shape extends Base {
     renderPath(ctx: CanvasRenderingContext2D) {
         if(!this.attr('show')) return; 
 
+        ctx.globalAlpha = this._opacity;
+
         if(this._fill) {
             ctx.fillStyle = this._color;
-            ctx.fill(this.path);
+            ctx.fill(this.path, this._fillRule? 'nonzero': 'evenodd');
         }
         else {
             ctx.strokeStyle = this._color;

@@ -80,7 +80,7 @@ class init {
         });
 
         //初始化事件系统
-        this.eventSystem = new EventSystem(this.canvasEle);
+        this.eventSystem = new EventSystem(this.canvasEle, this.ctx);
 
         //初始化广播器(监听者：图形对象堆的界面重刷方法)
         Broadcast.addListener('update', this.shapeHeap.update.bind(this.shapeHeap));

@@ -11,11 +11,11 @@ export class Circle extends Shape {
     private _radius: number; 
 
     constructor(config: circleConfig) {
-        super(config, 'circle');
+        super(config, 'Circle');
 
         this._center = [this._x, this._y];
         this._radius = config.radius;
-
+        
         this.writableProperties.push('radius');
 
         this.initSetter();

@@ -1,5 +1,5 @@
 import { Group } from '../shape/Group';
-import { ShapeType } from './core';
+import { ShapeType } from '../render/core';
 import { Composite } from '../shape/Composite';
 import { Shape } from '../shape/BaseShape';
 
@@ -8,7 +8,7 @@ import { Shape } from '../shape/BaseShape';
 // 集合类图形深度优先搜索
 export function DFS(shapeList: Array<ShapeType>, fn: Function, flag: boolean = true) {
     shapeList.map(item => {
-        if(item.attr('type') === 'group' || item.attr('type') === 'composite') {
+        if(item.attr('type') === 'Group' || item.attr('type') === 'Composite') {
             flag && fn(item);
             DFS((<Group | Composite>item).getShapeList(), fn);
         }
@@ -34,7 +34,7 @@ export function rotate(matrix: DOMMatrix, center: Array<number>, deg: number): D
     matrix.a = Math.cos(d); matrix.c = -1*Math.sin(d);
     matrix.b = Math.sin(d); matrix.d = Math.cos(d);
     matrix.e = -center[0]*Math.cos(d) + center[1]*Math.sin(d) + center[0];
-    matrix.f = -center[0]*Math.sin(d) - center[1]*Math.cos(d) + center[1];  
+    matrix.f = -center[0]*Math.sin(d) - center[1]*Math.cos(d) + center[1];   
 
     return matrix;
 }
@@ -71,12 +71,26 @@ export function matrixMulti(m1: DOMMatrix, m2: DOMMatrix, m: DOMMatrix): DOMMatr
 }
 
 
-// 判断鼠标是否在某个图形内
-export function isInShape(shape: Shape | Composite, x: number, y: number) {
-    
+// 判断坐标是否在某个图形内
+export function isInShape(ctx: CanvasRenderingContext2D, shape: Shape | Composite, x: number, y: number): boolean {
+    if(shape.attr('type') === 'Composite') {
+        let flag = false;
+
+        DFS(shape.getShapeList(), item => {
+            if(ctx.isPointInPath(item.getPath(), x, y)) flag = true;
+        }, false);
+
+        return flag;
+    }
+    else {
+        return ctx.isPointInPath(shape.getPath(), x, y);
+    }
 }
 
-
+// 判断坐标是否在某个路径上
+export function isInPath(ctx: CanvasRenderingContext2D, path: Path2D, x: number, y: number): boolean {
+    return ctx.isPointInStroke(path, x, y);
+}
 
 
 

@@ -31,32 +31,34 @@ const p = new prender(document.getElementById("canvas"), {
 });
 
 
-const cu = new p.shapes.RoundRect({
+let clickFlag = true;
+
+const rr1 = new p.shapes.RoundRect({
     pin: [200, 200],
     color: 'green',
-    //rotate: 15,
     round: 30,
     edge: [160, 160],
-    // draw(path, line) {
-    //     line
-    //     .bee([[0, 130]])
-    //     .arc(30, 180, 90)
-    //     .bee([[130, 160]])
-    //     .arc(30, 90, 0)
-    //     .bee([[160, 30]])
-    //     .arc(30, 0, -90)
-    //     .bee([[30, 0]])
-    //     .arc(30, -90, -180)
-    //     .end();
-    // }
+    onMouseOver: function(e) {
+        console.log('进来了');
+        this.attr('color', 'red');
+    },
+    onMouseOut: function(e) {
+        console.log('出去了');
+        this.attr('color', 'green');
+    },
+    onClick: function(e) {
+        console.log('点击了');
+        this.attr('rotate', clickFlag? 45: 0);
+        clickFlag = !clickFlag;
+    }
 });
+
 
 
 const r1 = new p.shapes.Rectangle({
     pin: [50, 50],
     edge: [90, 120],
     fill: true,
-    rotate: 90,
     color: 'blue'
 });
 
@@ -64,57 +66,57 @@ const r2 = new p.shapes.Rectangle({
     pin: [140, 50],
     edge: [120, 90],
     fill: true,
-    color: 'orange'
+    color: 'orange',
+    onClick: function(e) {
+        console.log('点击了');
+        this.attr('rotate', clickFlag? 0: 45);
+        clickFlag = !clickFlag;
+    }
 });
 
 
 const t1 = new p.shapes.Triangle({
-    pin: [310, 100],
+    pin: [510, 100],
     edge: 100,
-    rotate: 45,
     fill: true,
-    color: 'pink'
+    color: 'pink',
+    rotate: 90,
+    onClick: function(e) {
+        console.log('点击了');
+        this.attr('rotate', clickFlag? 0: 90);
+        clickFlag = !clickFlag;
+    }
 });
 
-
-const cir1 = new p.shapes.Circle({
-    pin: [310, 100],
-    radius: 50,
+const t2 = new p.shapes.Triangle({
+    pin: [510, 100],
+    edge: 100,
     fill: true,
-    color: 'red'
-});
-
-
-const c1 = new p.shapes.Composite({
-    pin: [50, 50],
-    center: [155, 85]
-});
-
-
-c1.join(r1);
-c1.join(r2);
-
-
-const c2 = new p.shapes.Composite({
-    pin: [50, 50],
-    center: [215, 85],
-    shapes: [c1, cir1]
+    color: 'yellow'
 });
 
 
 
 
-p.append(c2);
-p.append(t1);
-p.append(cir1);
-p.append(cu);
-
-r1.attr('y', 200);
 
 
-//c2.attr('rotate', 90);
+
+
+
+
+const g1 = new p.shapes.Group();
+
+g1.append([r2, t1, rr1]);
+
+p.append(t2);
+p.append(g1);
+
+
+
+
 
 console.log('图形数量:' + p.getShapesCount());
+
 
 
 

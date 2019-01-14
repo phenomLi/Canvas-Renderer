@@ -14,7 +14,7 @@ export class Triangle extends Shape {
     private height: number;
 
     constructor(config: triangleConfig) {
-        super(config, 'triangle');
+        super(config, 'Triangle');
 
         this._edge = config.edge;
         this.midEdge = this._edge/2;

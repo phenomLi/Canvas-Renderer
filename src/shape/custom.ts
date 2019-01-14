@@ -3,6 +3,7 @@ import { line } from './Line';
 
 class customConfig extends shapeConfig {
     center: Array<number>;
+    fillRule: boolean;
 
     // 在config中重写draw函数，实现用户定制图形
     draw(ctx: CanvasRenderingContext2D) {};
@@ -14,9 +15,10 @@ export class Custom extends Shape {
     private _draw: Function;
 
     constructor(config: customConfig) {
-        super(config, 'custom');
+        super(config, 'Custom');
 
         this._center = config.center;
+        this._fillRule = config.fillRule || true;
         this._draw = config.draw;
 
         this.initSetter();

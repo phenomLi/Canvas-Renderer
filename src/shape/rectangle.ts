@@ -13,7 +13,7 @@ export class Rectangle extends Shape {
     private _height: number;
 
     constructor(config: rectangleConfig) {
-        super(config, 'rectangle');
+        super(config, 'Rectangle');
 
         this._width = config.edge[0];
         this._height = config.edge[1];
