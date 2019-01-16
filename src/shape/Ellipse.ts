@@ -3,7 +3,7 @@ import { Shape, shapeConfig } from './BaseShape';
 
 
 class ellipseConfig extends shapeConfig {
-    radius: Array<number>;
+    radius: Array<number>; //*
 }
 
 
@@ -30,19 +30,19 @@ export class Ellipse extends Shape {
     }
 
     // 新增setter（radiusX）
-    setRadiusX(rx: number) {
+    protected setRadiusX(rx: number) {
         this._radiusX = rx;
         this.drawPath().transFormPath();
     }
 
     // 新增setter（radiusY）
-    setRadiusY(ry: number) {
+    protected setRadiusY(ry: number) {
         this._radiusY = ry;
         this.drawPath().transFormPath();
     }
 
     // 重载setter（rotate）
-    setRotate(deg: number) {
+    protected setRotate(deg: number) {
         this._rotate = deg;
         this.drawPath().transFormPath();
     }

@@ -1,4 +1,3 @@
-import { Shape } from './BaseShape';
 import { Matrix } from './../render/core';
 
 

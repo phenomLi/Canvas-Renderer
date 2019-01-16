@@ -2,7 +2,7 @@ import { Shape, shapeConfig } from './BaseShape';
 
 
 class circleConfig extends shapeConfig {
-    radius: number;
+    radius: number; //*
 }
 
 

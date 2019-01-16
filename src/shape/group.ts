@@ -1,18 +1,22 @@
-import { Base } from './BaseShape';
 import Broadcast from './../Broadcast/Broadcast';
 import { ShapeType } from '../render/core';
 import { DFS } from '../util/util';
+import { Base } from './BaseShape';
+
+
+// Group容器可以存放的图形
+type GroupContainType = ShapeType;
 
 
 class groupConfig {
-    shapes: Array<ShapeType>;
+    shapes: Array<GroupContainType>;
     mounted: Function;
     removed: Function;
 }
 
 
 export class Group extends Base {
-    private shapeList: Array<ShapeType>;
+    private shapeList: Array<GroupContainType>;
 
     constructor(config: groupConfig) {
         super(config, 'Group');
@@ -50,11 +54,11 @@ export class Group extends Base {
         });
     }
 
-    getShapeList(): Array<ShapeType> {
+    getShapeList(): Array<GroupContainType> {
         return this.shapeList;
     }
 
-    append(shape: ShapeType | Array<ShapeType>) {
+    append(shape: GroupContainType | Array<GroupContainType>) {
         if(shape instanceof Array) {
             shape.map(item => this.append(item));
         }
@@ -67,7 +71,7 @@ export class Group extends Base {
         }
     }
 
-    remove(shape: ShapeType) {
+    remove(shape: GroupContainType) {
         let id = shape.attr('id');
 
         this.shapeList.map((item, index) => {
@@ -81,14 +85,11 @@ export class Group extends Base {
         this.isMount && Broadcast.notify('update');
     }
 
-    renderPath(ctx: CanvasRenderingContext2D) {
+    render(ctx: CanvasRenderingContext2D) {
         DFS(this.shapeList, item => {
-            if(!item.attr('show')) return; 
-            else {
-                ctx.save();
-                item.renderPath(ctx);
-                ctx.restore();
-            }
+            ctx.save();
+            item.render(ctx);
+            ctx.restore();
         }, false);
     }
 }

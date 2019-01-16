@@ -3,7 +3,7 @@ import { line } from './Line';
 
 
 class rectangleConfig extends shapeConfig {
-    edge: Array<number>;
+    edge: Array<number>; //*
 }
 
 

@@ -3,8 +3,8 @@
 module.exports = {
     entry: './src/init.ts',
     output: {
-			filename: './bundle.js',
-			library: 'P2',
+		filename: './bundle.js',
+		library: 'P2',
      	libraryTarget: 'var'
     },
     resolve: {
@@ -15,6 +15,7 @@ module.exports = {
 		rules: [
 			{
 				test: /\.ts$/,
+				exclude: /node_modules/, 
 				loader: 'awesome-typescript-loader'
 			}
 		]

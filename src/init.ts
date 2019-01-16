@@ -86,8 +86,10 @@ class init {
         Broadcast.addListener('update', this.shapeHeap.update.bind(this.shapeHeap));
         //初始化广播器(监听者：图形对象堆的界面克隆方法)
         Broadcast.addListener('clone', this.shapeHeap.clone.bind(this.shapeHeap));
-        //初始化广播器(监听者：图形对象堆的界面重刷方法)
-        Broadcast.addListener('event', this.eventSystem.addEvent.bind(this.eventSystem));
+        //初始化广播器(监听者：事件系统的事件添加方法)
+        Broadcast.addListener('add_event', this.eventSystem.addEvent.bind(this.eventSystem));
+        //初始化广播器(监听者：事件系统的事件删除方法)
+        Broadcast.addListener('del_event', this.eventSystem.delEvent.bind(this.eventSystem));
 
         // 暴露图形api
         this.shapes = shapes;

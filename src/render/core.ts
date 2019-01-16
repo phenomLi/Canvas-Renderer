@@ -1,4 +1,4 @@
-import { DFS, isInShape, rotate, transform } from '../util/util';
+import { DFS, isInShape } from '../util/util';
 import Broadcast from './../Broadcast/Broadcast';
 import { Shape } from '../shape/BaseShape';
 import { Custom } from '../shape/Custom';
@@ -9,10 +9,11 @@ import { Ellipse } from './../shape/Ellipse';
 import { RoundRect } from './../shape/RoundRect';
 import { Group } from '../shape/Group';
 import { Composite } from '../shape/Composite';
+import { TextBlock } from '../shape/Text';
 
  
 // 图形类
-export type ShapeType = Shape | Group | Composite;
+export type ShapeType = Shape | Group | Composite | TextBlock;
 // 4个svg矩阵：旋转矩阵, 形变矩阵, 位移矩阵, 相乘结果矩阵
 export const Matrix = {
     rotateMatrix: document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix(),
@@ -137,10 +138,8 @@ export class shapeHeap {
         this.ctx.clearRect(0, 0, this.canvasInfo.width, this.canvasInfo.height);
 
         this.shapeHeapArray.map(item => {
-            if(!item.attr('show')) return; 
-
             this.ctx.save();
-            item.renderPath(this.ctx);
+            item.render(this.ctx);
             this.ctx.restore();
         });
     }
@@ -158,6 +157,7 @@ export const shapes = {
     Composite,
     Ellipse,
     RoundRect,
+    Text: TextBlock
 }
 
 // 实用函数集合

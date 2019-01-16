@@ -3,7 +3,7 @@ import { line } from './Line';
 
 
 class triangleConfig extends shapeConfig {
-    edge: number;
+    edge: number; //*
 }
 
 

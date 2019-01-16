@@ -73,7 +73,7 @@ export function matrixMulti(m1: DOMMatrix, m2: DOMMatrix, m: DOMMatrix): DOMMatr
 
 // 判断坐标是否在某个图形内
 export function isInShape(ctx: CanvasRenderingContext2D, shape: Shape | Composite, x: number, y: number): boolean {
-    if(shape.attr('type') === 'Composite') {
+    if(shape instanceof Composite) {
         let flag = false;
 
         DFS(shape.getShapeList(), item => {

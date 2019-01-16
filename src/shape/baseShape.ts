@@ -1,13 +1,13 @@
 import { event, keyBoardEvent } from '../event/core';
 import { DFS, rotate, transform } from '../util/util';
-import { ShapeType, Matrix } from '../render/core';
-import { Custom } from './Custom';
+import { Matrix } from '../render/core';
 import Broadcast from './../Broadcast/Broadcast';
+import { Composite } from './composite';
 
 
 export class shapeConfig {
     // 位置
-    pin: Array<number>;
+    pin: Array<number>; //*
     // 颜色
     color: string;
     // 是否填充
@@ -84,7 +84,7 @@ export class Base {
         });
     }
 
-    // 属性get、set
+    // 属性get、set(暴露api)
     public attr(attr: string, val?: any): any | Base {
         if(!this.readableProperties.includes(attr)) {
             console.warn(`${attr}属性不存在`);
@@ -105,29 +105,24 @@ export class Base {
         }
     }
 
-
     // 切换挂载状态
     toggleMount(isMount: boolean) {
         this.isMount = isMount;
         // 更改挂载状态后执行钩子函数
         isMount? this.mounted(): this.removed();
 
-        if(this.attr('type') === 'Group' || this.attr('type') === 'Composite') {
+        if(this._type === 'Group' || this._type === 'Composite') {
             DFS(this.getShapeList(), item => {
                 item.toggleMount(isMount);
-                // 从画布中移除后执行钩子函数
-                isMount? item.mounted(): item.removed();
             });
         }
     }
-    
-    // 需重载函数: 返回图形数组(只有group和composite有该方法)
-    public getShapeList(): Array<ShapeType> { return null; }
+
 
     // 返回图形数量
-    getCount(): number {
-        return this.count;
-    }
+    getCount(): number { return this.count; }
+
+    getShapeList() { return null; };
 
     // 需重载函数: 返回配置项
     config() {};
@@ -152,16 +147,24 @@ export class Base {
     /**-------------------------PATH-------------------------- */
 
     // 定义path2D路径(需重载)
-    drawPath(): Base { return null; }
+    drawPath(): Base { return this; }
 
     // 旋转path2D路径(需重载)
-    rotatePath(): Base { return null; }
+    rotatePath(): Base { return this; }
 
     // 形变path2D路径(需重载)
-    transFormPath(): Base { return null; }
+    transFormPath(): Base { return this; }
 
-    // 渲染路径到canvas(需重载)
-    renderPath(ctx: CanvasRenderingContext2D) {}
+    // 渲染图形到canvas(需重载)
+    render(ctx: CanvasRenderingContext2D) {}
+}
+
+
+
+
+class eventInfo {
+    eventName: string;
+    fn: ((e: event) => {}) | keyBoardEvent;
 }
 
 
@@ -179,7 +182,8 @@ export class Shape extends Base {
     protected _fillRule: boolean;
 
     protected path: Path2D;
-    protected originEventName;
+    protected camelCaseEventName;
+    protected eventList: eventInfo[];
 
     // 鼠标是否在当前图形里面
     public isMouseIn: boolean;
@@ -199,7 +203,8 @@ export class Shape extends Base {
         this._fillRule = true;
         
         this.isMouseIn = false;
-        this.originEventName = {};
+        this.eventList = [];
+        this.camelCaseEventName = {};
 
         this.writableProperties = ['x', 'y', 'color', 'fill', 'opacity', 'rotate', 'transform', 'show'];
         this.readonlyProperties.push('center');
@@ -209,7 +214,7 @@ export class Shape extends Base {
         // 保存config中声明的事件
         for(let prop in config) {
             if(/^on./g.test(prop)) {
-                this.originEventName[prop] = config[prop];
+                this.camelCaseEventName[prop] = config[prop];
                 this.bind(prop.toLowerCase().substring(2), config[prop]);
             }
         }
@@ -224,7 +229,7 @@ export class Shape extends Base {
             fill: this._fill,
             rotate: this._rotate,
             transform: this._transform,
-            ...this.originEventName,
+            ...this.camelCaseEventName,
 
             // hook
             mounted: this._mounted,
@@ -246,7 +251,7 @@ export class Shape extends Base {
     /**--------------------重载的setter-------------------- */
 
     // 重载setter（x）
-    setX(x: number) {
+    protected setX(x: number) {
         let d = x - this._x;
         this._x = x;
         this._center[0] = this._center[0] + d;
@@ -255,7 +260,7 @@ export class Shape extends Base {
     }
 
     // 重载setter（y）
-    setY(y: number) {
+    protected setY(y: number) {
         let d = y - this._y;
         this._y = y;
         this._center[1] = this._center[1] + d;
@@ -265,21 +270,92 @@ export class Shape extends Base {
 
     /** -------------------事件---------------------------- */
 
-    // 绑定事件，只有shape和composite类型有该方法
-    bind(event: string, fn: (e: event) => {} | keyBoardEvent) {
-        Broadcast.notify('event', {
-            shape: this,
-            eventName: event,
-            fn: fn.bind(this)
+    // 将事件绑定到canvas
+    private addEvent(eventInfo: eventInfo[]) {
+        eventInfo.map(item => {
+            // 若是键盘事件数组
+            if(item.fn instanceof Array) {
+                item.fn.map(i => {
+                    Broadcast.notify('add_event', {
+                        shape: this,
+                        eventName: item.eventName,
+                        fn: i
+                    });
+                });
+            }
+            else {
+                Broadcast.notify('add_event', {
+                    shape: this,
+                    eventName: item.eventName,
+                    fn: item.fn
+                });
+            }
         });
     }
 
+    // 将事件从canvas解绑
+    private delEvent(shape: Shape | Composite) {
+        Broadcast.notify('del_event', shape);
+    }
+
+    // 绑定事件，只有shape和composite类型有该方法(暴露api)
+    public bind(event: string, fn: ((e: event) => {}) | keyBoardEvent) {
+        // 改变事件回调函数的上下文为该图形（this = shape）
+        if(event === 'keypress') {
+            fn instanceof Array? 
+            fn.map(item => item.fn = item.fn.bind(this)):
+            (<keyBoardEvent>fn).fn = (<keyBoardEvent>fn).fn.bind(this)
+        }
+        else {
+            fn = (<Function>fn).bind(this);
+        } 
+        
+        // 若图形已经挂载在canvas上，则直接绑定事件
+        if(this.isMount) {
+            this.addEvent([{
+                eventName: event,
+                fn: fn
+            }]);
+        }
+        
+        // 将事件保存起来
+        this.eventList.push({
+            eventName: event,
+            fn: fn
+        });
+    }
+
+    // 获取该图形拥有的事件列表
+    public getEventList(): eventInfo[] {
+        return this.eventList;
+    }
 
     /** -------------------动画---------------------------- */
 
     animate(o: Shape) {}
     start(fn: Function) {}
     end(fn: Function) {}
+
+
+    /**------------------------- 状态钩子----------------------- */
+
+    mounted() {
+        // 图形挂载到canvas时，绑定事件
+        this.addEvent(this.eventList);
+
+        if(this._mounted && typeof this._mounted === 'function') {
+            this._mounted();
+        } 
+    }
+
+    removed() {
+        // 图形从canvas移出时，解绑事件
+        this.delEvent(this);
+
+        if(this._removed && typeof this._removed === 'function') {
+            this._removed();
+        }
+    }
 
 
     /** -------------------PATH2D路径---------------------------- */
@@ -309,9 +385,9 @@ export class Shape extends Base {
         return this;
     }
 
-    // 渲染path2D路径
-    renderPath(ctx: CanvasRenderingContext2D) {
-        if(!this.attr('show')) return; 
+    // 渲染图形到canvas
+    render(ctx: CanvasRenderingContext2D) {
+        if(!this._show) return; 
 
         ctx.globalAlpha = this._opacity;
 

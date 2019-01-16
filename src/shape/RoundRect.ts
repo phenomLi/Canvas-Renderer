@@ -3,8 +3,8 @@ import { line } from './Line';
 
 
 class roundRectConfig extends shapeConfig {
-    edge: Array<number>;
-    round: number;
+    edge: Array<number>; //*
+    round: number; //*
 }
 
 
