@@ -7,89 +7,89 @@
  */
 
 const Tween = {
-    linear: function (t, b, c, d) {
+    linear(t, b, c, d) {
         return c * t / d + b;
     },
     // Quad
-    easeIn: function (t, b, c, d) {
+    easeIn(t, b, c, d) {
         return c * (t /= d) * t + b;
     },
-    easeOut: function (t, b, c, d) {
+    easeOut(t, b, c, d) {
         return -c * (t /= d) * (t - 2) + b;
     },
-    easeInOut: function (t, b, c, d) {
+    easeInOut(t, b, c, d) {
         if ((t /= d / 2) < 1) return c / 2 * t * t + b;
         return -c / 2 * ((--t) * (t - 2) - 1) + b;
     },
     // Cubic
-    easeInCubic: function (t, b, c, d) {
+    easeInCubic(t, b, c, d) {
         return c * (t /= d) * t * t + b;
     },
-    easeOutCubic: function (t, b, c, d) {
+    easeOutCubic(t, b, c, d) {
         return c * ((t = t / d - 1) * t * t + 1) + b;
     },
-    easeInOutCubic: function (t, b, c, d) {
+    easeInOutCubic(t, b, c, d) {
         if ((t /= d / 2) < 1) return c / 2 * t * t * t + b;
         return c / 2 * ((t -= 2) * t * t + 2) + b;
     },
     // Quart
-    easeInQuart: function (t, b, c, d) {
+    easeInQuart(t, b, c, d) {
         return c * (t /= d) * t * t * t + b;
     },
-    easeOutQuart: function (t, b, c, d) {
+    easeOutQuart(t, b, c, d) {
         return -c * ((t = t / d - 1) * t * t * t - 1) + b;
     },
-    easeInOutQuart: function (t, b, c, d) {
+    easeInOutQuart(t, b, c, d) {
         if ((t /= d / 2) < 1) return c / 2 * t * t * t * t + b;
         return -c / 2 * ((t -= 2) * t * t * t - 2) + b;
     },
     // Quint
-    easeInQuint: function (t, b, c, d) {
+    easeInQuint(t, b, c, d) {
         return c * (t /= d) * t * t * t * t + b;
     },
-    easeOutQuint: function (t, b, c, d) {
+    easeOutQuint(t, b, c, d) {
         return c * ((t = t / d - 1) * t * t * t * t + 1) + b;
     },
-    easeInOutQuint: function (t, b, c, d) {
+    easeInOutQuint(t, b, c, d) {
         if ((t /= d / 2) < 1) return c / 2 * t * t * t * t * t + b;
         return c / 2 * ((t -= 2) * t * t * t * t + 2) + b;
     },
     // Sine
-    easeInSine: function (t, b, c, d) {
+    easeInSine(t, b, c, d) {
         return -c * Math.cos(t / d * (Math.PI / 2)) + c + b;
     },
-    easeOutSine: function (t, b, c, d) {
+    easeOutSine(t, b, c, d) {
         return c * Math.sin(t / d * (Math.PI / 2)) + b;
     },
-    easeInOutSine: function (t, b, c, d) {
+    easeInOutSine(t, b, c, d) {
         return -c / 2 * (Math.cos(Math.PI * t / d) - 1) + b;
     },
     // Expo
-    easeInExpo: function (t, b, c, d) {
+    easeInExpo(t, b, c, d) {
         return (t == 0) ? b : c * Math.pow(2, 10 * (t / d - 1)) + b;
     },
-    easeOutExpo: function (t, b, c, d) {
+    easeOutExpo(t, b, c, d) {
         return (t == d) ? b + c : c * (-Math.pow(2, -10 * t / d) + 1) + b;
     },
-    easeInOutExpo: function (t, b, c, d) {
+    easeInOutExpo(t, b, c, d) {
         if (t == 0) return b;
         if (t == d) return b + c;
         if ((t /= d / 2) < 1) return c / 2 * Math.pow(2, 10 * (t - 1)) + b;
         return c / 2 * (-Math.pow(2, -10 * --t) + 2) + b;
     },
     // Circ
-    easeInCirc: function (t, b, c, d) {
+    easeInCirc(t, b, c, d) {
         return -c * (Math.sqrt(1 - (t /= d) * t) - 1) + b;
     },
-    easeOutCirc: function (t, b, c, d) {
+    easeOutCirc(t, b, c, d) {
         return c * Math.sqrt(1 - (t = t / d - 1) * t) + b;
     },
-    easeInOutCirc: function (t, b, c, d) {
+    easeInOutCirc(t, b, c, d) {
         if ((t /= d / 2) < 1) return -c / 2 * (Math.sqrt(1 - t * t) - 1) + b;
         return c / 2 * (Math.sqrt(1 - (t -= 2) * t) + 1) + b;
     },
     // Elastic
-    easeInElastic: function (t, b, c, d, a, p) {
+    easeInElastic(t, b, c, d, a, p) {
         let s;
         if (t == 0) return b;
         if ((t /= d) == 1) return b + c;
@@ -102,7 +102,7 @@ const Tween = {
         }
         return -(a * Math.pow(2, 10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p)) + b;
     },
-    easeOutElastic: function (t, b, c, d, a, p) {
+    easeOutElastic(t, b, c, d, a, p) {
         let s;
         if (t == 0) return b;
         if ((t /= d) == 1) return b + c;
@@ -115,7 +115,7 @@ const Tween = {
         }
         return (a * Math.pow(2, -10 * t) * Math.sin((t * d - s) * (2 * Math.PI) / p) + c + b);
     },
-    easeInOutElastic: function (t, b, c, d, a, p) {
+    easeInOutElastic(t, b, c, d, a, p) {
         let s;
         if (t == 0) return b;
         if ((t /= d / 2) == 2) return b + c;
@@ -130,24 +130,24 @@ const Tween = {
         return a * Math.pow(2, -10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p) * .5 + c + b;
     },
     // Back
-    easeInBack: function (t, b, c, d, s) {
+    easeInBack(t, b, c, d, s) {
         if (typeof s == "undefined") s = 1.70158;
         return c * (t /= d) * t * ((s + 1) * t - s) + b;
     },
-    easeOutBack: function (t, b, c, d, s) {
+    easeOutBack(t, b, c, d, s) {
         if (typeof s == "undefined") s = 1.70158;
         return c * ((t = t / d - 1) * t * ((s + 1) * t + s) + 1) + b;
     },
-    easeInOutBack: function (t, b, c, d, s) {
+    easeInOutBack(t, b, c, d, s) {
         if (typeof s == "undefined") s = 1.70158;
         if ((t /= d / 2) < 1) return c / 2 * (t * t * (((s *= (1.525)) + 1) * t - s)) + b;
         return c / 2 * ((t -= 2) * t * (((s *= (1.525)) + 1) * t + s) + 2) + b;
     },
     // Bounce
-    easeInBounce: function (t, b, c, d) {
+    easeInBounce(t, b, c, d) {
         return c - Tween.easeOutBounce(d - t, 0, c, d) + b;
     },
-    easeOutBounce: function (t, b, c, d) {
+    easeOutBounce(t, b, c, d) {
         if ((t /= d) < (1 / 2.75)) {
             return c * (7.5625 * t * t) + b;
         } else if (t < (2 / 2.75)) {
@@ -158,7 +158,7 @@ const Tween = {
             return c * (7.5625 * (t -= (2.625 / 2.75)) * t + .984375) + b;
         }
     },
-    easeInOutBounce: function (t, b, c, d) {
+    easeInOutBounce(t, b, c, d) {
         if (t < d / 2) {
             return Tween.easeInBounce(t * 2, 0, c, d) * .5 + b;
         } else {

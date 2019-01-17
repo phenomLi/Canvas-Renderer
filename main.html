@@ -119,10 +119,39 @@ const c1 = new p.shapes.Composite({
 
 const g1 = new p.shapes.Group();
 
-//g1.append([c1, rr1]);
 
 p.append(rr1);
 
+
+const myAnimation = new p.animation({
+    value: [[200, 600], [200, 0]],
+    timingFunction: 'easeOut',
+    render: function(v1, v2) {
+        rr1.attr('x', v1);
+        rr1.attr('y', v2);
+    }
+});
+
+myAnimation.start();
+// .next({
+//     value: [200, 0],
+//     timingFunction: 'easeOut',
+//     render: function(v) {
+//         rr1.attr('y', v);
+//     }
+// }).next({
+//     value: [600, 200],
+//     timingFunction: 'easeOut',
+//     render: function(v) {
+//         rr1.attr('x', v);
+//     }
+// }).next({
+//     value: [0, 200],
+//     timingFunction: 'easeOut',
+//     render: function(v) {
+//         rr1.attr('y', v);
+//     }
+// }).start();
 
 
 console.log('图形数量:' + p.getShapesCount());

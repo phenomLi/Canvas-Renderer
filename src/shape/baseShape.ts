@@ -112,7 +112,7 @@ export class Base {
         isMount? this.mounted(): this.removed();
 
         if(this._type === 'Group' || this._type === 'Composite') {
-            DFS(this.getShapeList(), item => {
+            this.getShapeList().map(item => {
                 item.toggleMount(isMount);
             });
         }

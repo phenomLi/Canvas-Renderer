@@ -47,7 +47,7 @@ export class Group extends Base {
     }
 
     // 重载setter（show）
-    setShow(show: boolean) {
+    private setShow(show: boolean) {
         this._show = show;
         this.shapeList.map(item => {
             item.attr('show', show);
@@ -58,6 +58,12 @@ export class Group extends Base {
         return this.shapeList;
     }
 
+    // 判断一个图形是否在group内
+    public isShapeAt(shape: GroupContainType): boolean {
+        return this.shapeList.some(item => item.attr('id') === shape.attr('id'));
+    }
+
+    // 添加一个图形到group
     append(shape: GroupContainType | Array<GroupContainType>) {
         if(shape instanceof Array) {
             shape.map(item => this.append(item));
@@ -71,6 +77,7 @@ export class Group extends Base {
         }
     }
 
+    // 把一个图形从group移出
     remove(shape: GroupContainType) {
         let id = shape.attr('id');
 

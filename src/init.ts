@@ -2,6 +2,7 @@ import { shapes, utils, ShapeType } from './render/core';
 import { shapeHeap } from './render/core';
 import Broadcast from './Broadcast/Broadcast';
 import { EventSystem } from './event/core';
+import Animation from './animation/core';
 
 /* ------------------------------------------------------------------------------------------ */
 
@@ -63,8 +64,11 @@ class init {
     private ctx: CanvasRenderingContext2D;
     private shapeHeap: shapeHeap;
     private eventSystem: EventSystem;
+
+    // 开放的api
     public shapes;
     public utils;
+    public animation;
 
     constructor(canvasEle: HTMLCanvasElement, config: canvasConfig) {
         this.canvasEle = canvasEle;
@@ -95,6 +99,8 @@ class init {
         this.shapes = shapes;
         // 暴露实用函数api
         this.utils = utils;
+        // 暴露动画api
+        this.animation = Animation;
     }
 
 

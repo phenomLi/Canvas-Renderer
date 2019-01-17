@@ -126,8 +126,6 @@ export class shapeHeap {
             this.aSyncUpdateRequestCount++;
 
             if(this.aSyncUpdateRequestCount === this.updateRequestCount) {
-                console.log('申请更新次数：' + this.updateRequestCount);
-
                 this.updateRequestCount = this.aSyncUpdateRequestCount = 0;
                 this.reRender();
             }

@@ -45,7 +45,7 @@ export class Composite extends Shape {
         this.initSetter();
     } 
 
-    join(shape: CompositeContainType | Array<CompositeContainType>, deep?: boolean) {
+    public join(shape: CompositeContainType | Array<CompositeContainType>, deep?: boolean) {
         if(shape instanceof Array) {
             shape.map(item => this.join(item, deep));
         }
@@ -69,7 +69,7 @@ export class Composite extends Shape {
     }
 
     // 重载setter（x）
-    setX(x: number) {
+    protected setX(x: number) {
         let d = x - this._x;
         this._x = x;
         this._center[0] = this._center[0] + d;
@@ -81,7 +81,7 @@ export class Composite extends Shape {
     }
 
     // 重载setter（y）
-    setY(y: number) {
+    protected setY(y: number) {
         let d = y - this._y;
         this._y = y;
         this._center[1] = this._center[1] + d;
@@ -93,7 +93,7 @@ export class Composite extends Shape {
     }
 
     // 重载setter（show）
-    setShow(show: boolean) {
+    protected setShow(show: boolean) {
         this._show = show;
         this.shapeList.map(item => {
             item.attr('show', show);
@@ -101,7 +101,7 @@ export class Composite extends Shape {
     }
 
     // 重载setter（rotate）
-    setRotate(deg: number) {
+    protected setRotate(deg: number) {
         this._rotate = deg;
 
         // 每个图形先自己旋转
@@ -116,7 +116,7 @@ export class Composite extends Shape {
     }
 
     // 重载setter（transform）
-    setTransform(trans: Array<Array<number>>) {
+    protected setTransform(trans: Array<Array<number>>) {
         // 每个图形先自己形变
         DFS(this.getShapeList(), item => {
             item.drawPath().rotatePath().transFormPath();
@@ -129,12 +129,12 @@ export class Composite extends Shape {
         return this;
     }
 
-    getShapeList(): Array<CompositeContainType> {
+    public getShapeList(): Array<CompositeContainType> {
         return this.shapeList;
     }
     
     // 处理一下新加进来的shape(为新shape加上此Composite容器的旋转和形变属性)
-    shapeProcessor(shape: CompositeContainType): CompositeContainType {
+    private shapeProcessor(shape: CompositeContainType): CompositeContainType {
         // 对加入的每个图形进行旋转操作
         this._rotate && this.rotatePath(shape);
         // 对加入的每个图形进行形变操作
