@@ -10,12 +10,6 @@
 
 ### TODO：
 
-- shapePropertiesTable
-
 - Motion系统
-
-- SVG-path图形
-
-- 事件解绑功能
 
 - 包围盒算法
