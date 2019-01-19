@@ -88,8 +88,19 @@ export function isInShape(ctx: CanvasRenderingContext2D, shape: Shape | Composit
 }
 
 // 判断坐标是否在某个路径上
-export function isInPath(ctx: CanvasRenderingContext2D, path: Path2D, x: number, y: number): boolean {
-    return ctx.isPointInStroke(path, x, y);
+export function isInPath(ctx: CanvasRenderingContext2D, shape: Shape | Composite, x: number, y: number): boolean {
+    if(shape instanceof Composite) {
+        let flag = false;
+
+        DFS(shape.getShapeList(), item => {
+            if(ctx.isPointInStroke(item.getPath(), x, y)) flag = true;
+        }, false);
+
+        return flag;
+    }
+    else {
+        return ctx.isPointInStroke(shape.getPath(), x, y);
+    }
 }
 
 

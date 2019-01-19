@@ -49,7 +49,6 @@ const rr1 = new p.shapes.RoundRect({
     },
     onClick: function(e) {
         this.attr('rotate', clickFlag? 45: 0);
-        text1.attr('rotate', clickFlag? 45: 0);
         clickFlag = !clickFlag;
     },
     onKeyPress: [{
@@ -97,61 +96,62 @@ const r2 = new p.shapes.Rectangle({
 
 
 
-const text1 = new p.shapes.Text({
-    pin: [r2.attr('x'), r2.attr('y') + 20],
-    content: 'PHENOM',
-    color: '#666',
-    fontSize: 20,
-    rotate: 45
-});
+// const text1 = new p.shapes.Text({
+//     pin: [r2.attr('x'), r2.attr('y') + 20],
+//     content: 'PHENOM',
+//     color: '#666',
+//     fontSize: 20,
+//     rotate: 45
+// });
 
 
-const c1 = new p.shapes.Composite({
-    pin: [r2.attr('x'), r2.attr('y')],
-    shapes: [r2, text1],
-    center: r2.attr('center')
-});
-
-
-
-
+// const c1 = new p.shapes.Composite({
+//     pin: [r2.attr('x'), r2.attr('y')],
+//     shapes: [r2, text1],
+//     center: r2.attr('center')
+// });
 
 
 const g1 = new p.shapes.Group();
 
 
+p.append(r1);
 p.append(rr1);
-
+p.append(r2);
 
 const myAnimation = new p.animation({
-    value: [[200, 600], [200, 0]],
-    timingFunction: 'easeOut',
-    render: function(v1, v2) {
-        rr1.attr('x', v1);
-        rr1.attr('y', v2);
+    value: [50, 300],
+    timingFunction: 'easeOutBounce',
+    render: function(v1) {
+        r1.attr('x', v1);
     }
 });
 
-myAnimation.start();
-// .next({
-//     value: [200, 0],
-//     timingFunction: 'easeOut',
-//     render: function(v) {
-//         rr1.attr('y', v);
-//     }
-// }).next({
-//     value: [600, 200],
-//     timingFunction: 'easeOut',
-//     render: function(v) {
-//         rr1.attr('x', v);
-//     }
-// }).next({
-//     value: [0, 200],
-//     timingFunction: 'easeOut',
-//     render: function(v) {
-//         rr1.attr('y', v);
-//     }
-// }).start();
+myAnimation
+.next({
+    value: [50, 300],
+    timingFunction: 'easeOutBounce',
+    render: function(v) {
+        r1.attr('y', v);
+    }
+}).next({
+    value: [300, 50],
+    timingFunction: 'easeOutBounce',
+    render: function(v) {
+        r1.attr('x', v);
+    }
+}).next({
+    value: [300, 50],
+    timingFunction: 'easeOutBounce',
+    render: function(v) {
+        r1.attr('y', v);
+    }
+}).loop();
+
+
+
+rr1.unbind('click');
+rr1.unbind('keypress', 39);
 
 
 console.log('图形数量:' + p.getShapesCount());
@@ -162,51 +162,7 @@ console.log('图形数量:' + p.getShapesCount());
 </script>
 <!-- <script>
 
-function rotate(matrix, center, deg) {
-    if(deg === 0) return null;
 
-    let d = deg/180*Math.PI;
-
-    matrix.a = Math.cos(d); matrix.c = -1*Math.sin(d);
-    matrix.b = Math.sin(d); matrix.d = Math.cos(d);
-    matrix.e = -center[0]*Math.cos(d) + center[1]*Math.sin(d) + center[0];
-    matrix.f = -center[0]*Math.sin(d) - center[1]*Math.cos(d) + center[1];  
-
-    return matrix;
-}
-
-
-// 进行形变操作
-function transform(matrix, center, matrixArray) {
-    if(matrixArray.length === 0) return null;
-
-    matrix.a = matrixArray[0][0]; matrix.c = matrixArray[0][1]; 
-    matrix.b = matrixArray[1][0]; matrix.d = matrixArray[1][1];   
-    matrix.e = -center[0]*matrixArray[0][0] - center[1]*matrixArray[0][1] + center[0];
-    matrix.f = -center[0]*matrixArray[1][0] - center[1]*matrixArray[1][1] + center[1];
-    
-    return matrix;
-}
-
-
-const can = document.getElementById('canvas'),
-      ctx = can.getContext('2d'),
-      m = document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix();
-
-let p1 = new Path2D(),
-    p2 = new Path2D(),
-    p3 = new Path2D();
-
-    // m.e = 100;
-    // m.f = 100;
-
-p1.rect(100, 100, 100, 100);
-
-p2.addPath(p1, m);
-p3.addPath(p2, transform(m, [150, 150], [[0.5, 0], [0, 0.5]]));
-
-ctx.fillStyle = 'green';
-ctx.fill(p2);
 
 </script> -->
 </body>

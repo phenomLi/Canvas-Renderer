@@ -1,4 +1,4 @@
-import { DFS, isInShape } from '../util/util';
+import { DFS, isInShape, isInPath } from '../util/util';
 import Broadcast from './../Broadcast/Broadcast';
 import { Shape } from '../shape/BaseShape';
 import { Custom } from '../shape/Custom';
@@ -7,6 +7,7 @@ import { Circle } from '../shape/Circle';
 import { Rectangle } from '../shape/Rectangle';
 import { Ellipse } from './../shape/Ellipse';
 import { RoundRect } from './../shape/RoundRect';
+import { SVGPath } from './../shape/SVGPath';
 import { Group } from '../shape/Group';
 import { Composite } from '../shape/Composite';
 import { TextBlock } from '../shape/Text';
@@ -119,6 +120,7 @@ export class shapeHeap {
 
     /** 更新画布 */
     public update() {
+ 
         this.updateRequestCount++;
 
         // 异步更新
@@ -155,12 +157,14 @@ export const shapes = {
     Composite,
     Ellipse,
     RoundRect,
+    SVGPath,
     Text: TextBlock
 }
 
 // 实用函数集合
 export const utils = {
-    isInShape
+    isInShape,
+    isInPath
 }
 
 

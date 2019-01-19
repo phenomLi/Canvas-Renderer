@@ -19,9 +19,6 @@ export class Rectangle extends Shape {
         this._height = config.edge[1];
         this._center = [this._x + this._width/2, this._y + this._height/2];
 
-        this.writableProperties.push('width');
-        this.writableProperties.push('height');
-
         this.initSetter();
         this.drawPath().rotatePath().transFormPath();
     }

@@ -27,8 +27,6 @@ export class Group extends Base {
         this.count = 0;
         this.shapeList = [];
 
-        this.writableProperties = ['show'];
-
         if(config && config.shapes) {
             config.shapes.map(item => {
                 this.append(item);

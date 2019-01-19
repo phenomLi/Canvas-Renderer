@@ -3,19 +3,20 @@ import Tween from './tween';
 
 class animationConfig {
     // 动画时长
-    duration: number;
+    duration?: number;
     // 变化的value
     value: Array<Array<number>> | Array<number>; //*
     // 渲染函数
-    render: (...value: number[]) => {}; //*
+    render: (...value: number[]) => void; //*
     // 缓动函数
-    timingFunction: string;
+    timingFunction?: string;
+    // 延迟
+    delay?: number;
 
     // hook
-    onStart: Function;
-    onEnd: Function;
-    onStop: Function;
-    onReset: Function;
+    onStart?: Function;
+    onEnd?: Function;
+    onStop?: Function;
 }
 
 
@@ -29,13 +30,15 @@ enum state {
     init = 0, // 初始化
     play = 1, //播放
     stop = 2, // 停止
-    end = 3 //停止
+    end = 3, //完成
+    final = 4 //结束
 };
 
 
 export default class Animation {
     private _value: Array<valueInfo>;
     private _duration :number;
+    private _delay: number;
     private _timingFunction: Function;
     private _renderFunction: Function;
     
@@ -43,22 +46,29 @@ export default class Animation {
     private _onStart: Function;
     private _onEnd: Function;
     private _onStop: Function;
-    private _onReset: Function;
+    private _onFinal: Function;
 
     private state: state;
     // 开始时间
     private beginTime: number;
     // 动画队列
     private animationQueue: Array<animationConfig>;
+    // 是否循环
+    private isLoop: boolean;
+    private animationQueueIndex: number;
 
     constructor(config: animationConfig) {
+        this.isLoop = false;
         this.animationQueue = [];
+        this.animationQueueIndex = 0;
+        this.animationQueue.push(config);
         this.init(config);
     }
 
     private init(config: animationConfig): Animation {
         this._value = [];
         this._duration = config.duration || 1000;
+        this._delay = config.delay || 0;
         this._timingFunction = config.timingFunction? Tween[config.timingFunction]: Tween['linear'];
         this._renderFunction = config.render || ((...value: number[]) => {});
 
@@ -66,7 +76,6 @@ export default class Animation {
         this._onStart = config.onStart || (() => {});
         this._onEnd = config.onEnd || (() => {});
         this._onStop = config.onStop || (() => {});
-        this._onReset = config.onReset || (() => {});
 
         // 状态为初始化
         this.state = state.init;
@@ -94,8 +103,8 @@ export default class Animation {
         }
     }
 
-    // 循环函数
-    private loop() {
+    // 动画帧函数
+    private animationFrame() {
         // 动画已经播放的时间
         let time = Date.now() - this.beginTime;
 
@@ -112,7 +121,7 @@ export default class Animation {
         }
         else {  
             this.renderFunction(time, this._duration);
-            window.requestAnimationFrame(this.loop.bind(this));
+            window.requestAnimationFrame(this.animationFrame.bind(this));
         }
     }
 
@@ -124,16 +133,38 @@ export default class Animation {
     }
 
 
+    private finalFunction() {
+        if(this.isLoop) {
+            this.state = state.init;
+            this.animationQueueIndex = 0;
+            this.init(this.animationQueue[this.animationQueueIndex]).start();
+        }
+        else {
+            this._onFinal && this._onFinal();
+        }
+    }
+
+
     /** --------------------------暴露的api------------------------------------- */
 
     // 开始
     public start() {
-        this.state = state.play;
-        this.beginTime = Date.now();
+        this.animationQueueIndex++;
 
-        this._onStart();
+        setTimeout(() => {
+            this.state = state.play;
+            this.beginTime = Date.now();
 
-        window.requestAnimationFrame(this.loop.bind(this));
+            this._onStart();
+
+            window.requestAnimationFrame(this.animationFrame.bind(this));
+        }, this._delay);
+    }
+
+    // 循环
+    public loop() {
+        this.isLoop = true;
+        this.start();
     }
 
     // 暂停
@@ -149,20 +180,23 @@ export default class Animation {
         if(this.state === state.play) {
             this.state = state.end;
             this._onEnd();
-            
-            console.log(this.animationQueue);
 
-            if(this.animationQueue.length) {
-                this.init(this.animationQueue.shift()).start();
+            if(this.animationQueueIndex < this.animationQueue.length) {
+                this.init(this.animationQueue[this.animationQueueIndex]).start();
+            }
+            else {
+                this.state = state.final;
+                this.finalFunction();
             }
         } 
     }
 
-    public reset() {
-        if(this.state === state.play) {
-            this.state = state.init;
-            this._onReset();
-        } 
+
+    // 动画列表结束后
+    public final(fn: Function): Animation {
+        this._onFinal = fn;
+        
+        return this;
     }
 
     public next(config: animationConfig): Animation {

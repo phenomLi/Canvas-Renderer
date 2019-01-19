@@ -3,7 +3,7 @@ import { Composite } from '../shape/composite';
 import { isInShape } from '../util/util';
 
 
-export class bindInfo {
+export class eventInfo {
     shape: Shape | Composite;
     eventName: string;
     fn: ((e: event) => {}) | keyBoardEvent;
@@ -12,7 +12,7 @@ export class bindInfo {
 
 export class keyBoardEvent {
     keyCode: number;
-    fn: (e: event) => {}
+    fn: ((e: event) => {})
 }
 
 export class event {
@@ -31,12 +31,12 @@ export class EventSystem {
 
     private eventList: Array<string> = ['click', 'mousemove', 'keypress', 'mouseover', 'mouseout'];
     
-    private clickEventList: Array<bindInfo>;
-    private mouseoverEventList: Array<bindInfo>;
-    private mouseoutEventList: Array<bindInfo>;
-    private mousemoveEventList: Array<bindInfo>;
-    // private mousedownEventList: Array<bindInfo>;
-    // private mouseupEventList: Array<bindInfo>;
+    private clickEventList: Array<eventInfo>;
+    private mouseoverEventList: Array<eventInfo>;
+    private mouseoutEventList: Array<eventInfo>;
+    private mousemoveEventList: Array<eventInfo>;
+    // private mousedownEventList: Array<eventInfo>;
+    // private mouseupEventList: Array<eventInfo>;
 
     //键盘数字对应表
     private keypressEventMap;
@@ -84,10 +84,10 @@ export class EventSystem {
             let x = ev['clientX'] - this.canvasLeft,
                 y = ev['clientY'] - this.canvasTop; 
 
-            this['clickEventList'].map((bindInfo: bindInfo) => {
-                if(isInShape(this.ctx, bindInfo.shape, x, y)) {
+            this['clickEventList'].map((eventInfo: eventInfo) => {
+                if(isInShape(this.ctx, eventInfo.shape, x, y)) {
                     // 触发click（一次）
-                    this.omitEvent(bindInfo.shape, <(e: event) => {}>bindInfo.fn, x, y);
+                    this.omitEvent(eventInfo.shape, <(e: event) => {}>eventInfo.fn, x, y);
                 }
             });
         });
@@ -98,36 +98,36 @@ export class EventSystem {
             let x = ev['clientX'] - this.canvasLeft,
                 y = ev['clientY'] - this.canvasTop;  
 
-            this['mouseoverEventList'].map((bindInfo: bindInfo) => {
-                if(isInShape(this.ctx, bindInfo.shape, x, y)) {
+            this['mouseoverEventList'].map((eventInfo: eventInfo) => {
+                if(isInShape(this.ctx, eventInfo.shape, x, y)) {
                     // 若之前鼠标不在该图形上，而且现在鼠标在该图形上
-                    if(!bindInfo.shape.isMouseIn) {
+                    if(!eventInfo.shape.isMouseIn()) {
                         // 触发mouseover（一次）
-                        this.omitEvent(bindInfo.shape, <(e: event) => {}>bindInfo.fn, x, y);
+                        this.omitEvent(eventInfo.shape, <(e: event) => {}>eventInfo.fn, x, y);
                         // 设置图形鼠标状态为true
-                        bindInfo.shape.isMouseIn = true;
+                        eventInfo.shape.isMouseIn(true);
                     }
                 }
             });
 
-            this['mouseoutEventList'].map((bindInfo: bindInfo) => {
-                if(!isInShape(this.ctx, bindInfo.shape, x, y)) {
+            this['mouseoutEventList'].map((eventInfo: eventInfo) => {
+                if(!isInShape(this.ctx, eventInfo.shape, x, y)) {
                     // 若之前鼠标在该图形上，而且现在鼠标不在该图形上
-                    if(bindInfo.shape.isMouseIn) {
+                    if(eventInfo.shape.isMouseIn()) {
                         // 触发mouseout（一次）
-                        this.omitEvent(bindInfo.shape, <(e: event) => {}>bindInfo.fn, x, y);
+                        this.omitEvent(eventInfo.shape, <(e: event) => {}>eventInfo.fn, x, y);
                         // 设置图形鼠标状态为false
-                        bindInfo.shape.isMouseIn = false;
+                        eventInfo.shape.isMouseIn(false);
                     }
                 }
             });
 
-            this['mousemoveEventList'].map((bindInfo: bindInfo) => {
-                if(isInShape(this.ctx, bindInfo.shape, x, y)) {
+            this['mousemoveEventList'].map((eventInfo: eventInfo) => {
+                if(isInShape(this.ctx, eventInfo.shape, x, y)) {
                     // 触发mousemove（多次）
-                    this.omitEvent(bindInfo.shape, <(e: event) => {}>bindInfo.fn, x, y);
+                    this.omitEvent(eventInfo.shape, <(e: event) => {}>eventInfo.fn, x, y);
                     // 设置图形鼠标状态为true
-                    bindInfo.shape.isMouseIn = true;
+                    eventInfo.shape.isMouseIn(true);
                 }
             });
 
@@ -139,45 +139,44 @@ export class EventSystem {
     // 绑定键盘事件
     bindKeyBoardEvent() {
         document.addEventListener('keydown', ev => {
-            this['keypressEventMap'][ev.keyCode] && this['keypressEventMap'][ev.keyCode].map((bindInfo: bindInfo) => {
-                this.omitEvent(bindInfo.shape, (<keyBoardEvent>bindInfo.fn).fn);
+            this['keypressEventMap'][ev.keyCode] && this['keypressEventMap'][ev.keyCode].map((eventInfo: eventInfo) => {
+                this.omitEvent(eventInfo.shape, (<keyBoardEvent>eventInfo.fn).fn);
             })
         });
     }
 
     // 添加事件
-    addEvent(bindInfo: bindInfo) {
-        if(bindInfo.eventName === 'keypress') {
-            if(this.keypressEventMap[(<keyBoardEvent>bindInfo.fn).keyCode] === undefined) 
-                this.keypressEventMap[(<keyBoardEvent>bindInfo.fn).keyCode] = [];
-            this.keypressEventMap[(<keyBoardEvent>bindInfo.fn).keyCode].push(bindInfo);
+    addEvent(eventInfo: eventInfo) {
+        if(eventInfo.eventName === 'keypress') {
+            if(this.keypressEventMap[(<keyBoardEvent>eventInfo.fn).keyCode] === undefined) 
+                this.keypressEventMap[(<keyBoardEvent>eventInfo.fn).keyCode] = [];
+            this.keypressEventMap[(<keyBoardEvent>eventInfo.fn).keyCode].push(eventInfo);
         }
         else {
-            this[bindInfo.eventName + 'EventList'].push(bindInfo);
+            this[eventInfo.eventName + 'EventList'].push(eventInfo);
         }
     }
 
     // 删除事件
-    delEvent(shape: Shape) {
+    delEvent(eventInfo: eventInfo) {
         let eventList = null;
 
-        shape.getEventList().map(item => {
-            if(item.eventName === 'keypress') {
-                eventList = this.keypressEventMap[item.fn['keyCode']];
-                eventList.map((bindInfoItem, index) => {
-                    if(bindInfoItem.shape.attr('id') === shape.attr('id')) {
-                        eventList.splice(index, 1);
-                    }
-                });
-            }
-            else {
-                eventList = this[item.eventName + 'EventList'];
-                eventList.map((bindInfoItem, index) => {
-                    if(bindInfoItem.shape.attr('id') === shape.attr('id')) {
-                        eventList.splice(index, 1);
-                    }
-                });
-            }
-        });
+        if(eventInfo.eventName === 'keypress') {
+            eventList = this.keypressEventMap[eventInfo['keyCode']];
+            eventList.map((item, index) => {
+                if(item.shape.attr('id') === eventInfo.shape.attr('id')) {
+                    eventList.splice(index, 1);
+                }
+            });
+        }
+        else {
+            eventList = this[eventInfo.eventName + 'EventList'];
+            eventList.map((item, index) => {
+                if(item.shape.attr('id') === eventInfo.shape.attr('id')) {
+                    eventList.splice(index, 1);
+                }
+            });
+        }
+    
     }
 }

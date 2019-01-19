@@ -3,7 +3,7 @@ import { line } from './Line';
 
 class customConfig extends shapeConfig {
     center: Array<number>; //*
-    fillRule: boolean;
+    fillRule?: boolean;
 
     // 在config中重写draw函数，实现用户定制图形
     draw(ctx: CanvasRenderingContext2D) {};

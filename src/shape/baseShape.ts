@@ -1,37 +1,10 @@
 import { event, keyBoardEvent } from '../event/core';
-import { DFS, rotate, transform } from '../util/util';
+import { rotate, transform } from '../util/util';
 import { Matrix } from '../render/core';
 import Broadcast from './../Broadcast/Broadcast';
 import { Composite } from './composite';
-
-
-export class shapeConfig {
-    // 位置
-    pin: Array<number>; //*
-    // 颜色
-    color: string;
-    // 是否填充
-    fill: boolean;
-    //透明度
-    opacity: number;
-    // 旋转
-    rotate: number;
-    // 形变
-    transform: Array<Array<number>>;
-
-    // event
-    onClick: (e: event) => {};
-    onMouseOver: (e: event) => {};
-    onMouseOut: (e: event) => {};
-    onMouseMove: (e: event) => {};
-    onMouseDown: (e: event) => {};
-    onMouseUp: (e: event) => {};
-    onKeyPress: keyBoardEvent;
-
-    // hook
-    mounted: Function;
-    removed: Function;
-}
+import Animation from './../animation/core';
+import ShapePropertiesTable from './../render/shapePropertiesTable';
 
 
 
@@ -44,12 +17,6 @@ export class Base {
 
     protected isMount: boolean;
 
-    protected writableProperties: Array<string>;
-    protected readonlyProperties: Array<string>;
-    protected readableProperties: Array<string>;
-    // 保存更改后不用重新绘制路径的属性
-    protected notRePathProperties: Array<string>;
-
     protected count: number;
 
     constructor(config: any, type: string) {
@@ -59,24 +26,18 @@ export class Base {
 
         this.isMount = false;
         this.count = 1;
-
-        this.writableProperties = [];
-        this.readonlyProperties = ['id', 'type'];
-        this.readableProperties = [];
     }
     
     // 初始化属性设置函数
     initSetter() {
-        this.readableProperties = this.readableProperties.concat(this.readonlyProperties, this.writableProperties);
-
-        this.writableProperties.map(attr => {
+        ShapePropertiesTable[this._type].writableProperties.map(attr => {
             let upperCaseAttr = attr.substring(0, 1).toUpperCase() + attr.substring(1);
 
             if(this[`set${upperCaseAttr}`] === undefined) {
                 this[`set${upperCaseAttr}`] = function(val) {
                     this[`_${attr}`] = val;
                     
-                    if(!this.notRePathProperties.includes(attr)) {
+                    if(!ShapePropertiesTable[this._type].notRePathProperties.includes(attr)) {
                         this.drawPath().rotatePath().transFormPath();
                     }
                 }
@@ -86,13 +47,13 @@ export class Base {
 
     // 属性get、set(暴露api)
     public attr(attr: string, val?: any): any | Base {
-        if(!this.readableProperties.includes(attr)) {
+        if(!ShapePropertiesTable[this._type].readableProperties.includes(attr)) {
             console.warn(`${attr}属性不存在`);
             return;
         }
 
         if(val !== undefined) {
-            if(this.writableProperties.includes(attr)) {
+            if(ShapePropertiesTable[this._type].writableProperties.includes(attr)) {
                 this[`set${attr.substring(0, 1).toUpperCase() + attr.substring(1)}`](val);
                 this.isMount && Broadcast.notify('update');
             }
@@ -160,6 +121,37 @@ export class Base {
 }
 
 
+/**------------------------------------SHAPE---------------------------------- */
+
+
+export class shapeConfig {
+    // 位置
+    pin: Array<number>; //*
+    // 颜色
+    color?: string;
+    // 是否填充
+    fill?: boolean;
+    //透明度
+    opacity?: number;
+    // 旋转
+    rotate?: number;
+    // 形变
+    transform?: Array<Array<number>>;
+
+    // event
+    onClick?: (e: event) => {};
+    onMouseOver?: (e: event) => {};
+    onMouseOut?: (e: event) => {};
+    onMouseMove?: (e: event) => {};
+    onMouseDown?: (e: event) => {};
+    onMouseUp?: (e: event) => {};
+    onKeyPress?: keyBoardEvent;
+
+    // hook
+    mounted?: Function;
+    removed?: Function;
+}
+
 
 
 class eventInfo {
@@ -167,6 +159,14 @@ class eventInfo {
     fn: ((e: event) => {}) | keyBoardEvent;
 }
 
+
+class animationConfig {
+    target: object;
+    duration?: number;
+    delay?: number; 
+    timingFunction?: string;
+    loop?: boolean = false; 
+}
 
 
 // 图形基类
@@ -182,11 +182,11 @@ export class Shape extends Base {
     protected _fillRule: boolean;
 
     protected path: Path2D;
-    protected camelCaseEventName;
+    protected camelCaseEventName: object;
     protected eventList: eventInfo[];
 
     // 鼠标是否在当前图形里面
-    public isMouseIn: boolean;
+    protected mouseIn: boolean;
 
     constructor(config: shapeConfig, type: string) {
         super(config, type);
@@ -202,14 +202,9 @@ export class Shape extends Base {
         this._removed = config.removed || (() => {});
         this._fillRule = true;
         
-        this.isMouseIn = false;
+        this.mouseIn = false;
         this.eventList = [];
         this.camelCaseEventName = {};
-
-        this.writableProperties = ['x', 'y', 'color', 'fill', 'opacity', 'rotate', 'transform', 'show'];
-        this.readonlyProperties.push('center');
-
-        this.notRePathProperties = ['color', 'fill', 'opacity', 'show'];
 
         // 保存config中声明的事件
         for(let prop in config) {
@@ -235,6 +230,15 @@ export class Shape extends Base {
             mounted: this._mounted,
             removed: this._removed
         };
+    }
+
+    isMouseIn(mouseIn?: boolean) {
+        if(mouseIn === undefined) {
+            return this.mouseIn;
+        }
+        else {
+            this.mouseIn = mouseIn;
+        }
     }
 
     /** ------------------------path---------------------- */
@@ -294,8 +298,22 @@ export class Shape extends Base {
     }
 
     // 将事件从canvas解绑
-    private delEvent(shape: Shape | Composite) {
-        Broadcast.notify('del_event', shape);
+    private delEvent(eventInfo) {
+        eventInfo.map(item => {
+            if(item.eventName === 'keypress') {
+                Broadcast.notify('del_event', {
+                    shape: this,
+                    eventName: item.eventName,
+                    keyCode: item.keyCode
+                });
+            }
+            else {
+                Broadcast.notify('del_event', {
+                    shape: this,
+                    eventName: item.eventName
+                });
+            }
+        });
     }
 
     // 绑定事件，只有shape和composite类型有该方法(暴露api)
@@ -325,6 +343,21 @@ export class Shape extends Base {
         });
     }
 
+    // 解绑事件
+    public unbind(event: string, keyCode?: number) {
+        if(event === 'keypress') {
+            this.delEvent([{
+                eventName: event,
+                keyCode: keyCode
+            }]);
+        }
+        else {
+            this.delEvent([{
+                eventName: event
+            }]);
+        }
+    }
+
     // 获取该图形拥有的事件列表
     public getEventList(): eventInfo[] {
         return this.eventList;
@@ -332,10 +365,33 @@ export class Shape extends Base {
 
     /** -------------------动画---------------------------- */
 
-    animate(o: Shape) {}
-    start(fn: Function) {}
-    end(fn: Function) {}
+    animateTo(config: animationConfig, fn?: Function) {
+        let values = [], that = this;
 
+        for(let prop in config.target) {
+            if(ShapePropertiesTable[that._type].animateProperties.includes(prop)) {
+                values.push([that['_' + prop], config.target[prop]]);
+            }
+        }
+
+        let animation = (new Animation({
+            value: values,
+            duration: config.duration,
+            delay: config.delay,
+            timingFunction: config.timingFunction,
+            render: function() {
+                let index = 0;
+
+                for(let prop in config.target) {
+                    if(ShapePropertiesTable[that._type].animateProperties.includes(prop)) {
+                        that.attr(prop, arguments[index++]);
+                    }
+                }
+            }
+        })).final(fn);
+
+        config.loop? animation.loop(): animation.start();
+    }
 
     /**------------------------- 状态钩子----------------------- */
 
@@ -350,7 +406,7 @@ export class Shape extends Base {
 
     removed() {
         // 图形从canvas移出时，解绑事件
-        this.delEvent(this);
+        this.delEvent(this.eventList);
 
         if(this._removed && typeof this._removed === 'function') {
             this._removed();
@@ -362,10 +418,10 @@ export class Shape extends Base {
 
 
     // 定义path2D路径(需重载)
-    drawPath(shape?): Shape { return this; }
+    drawPath(): Shape { return this; }
 
     // 旋转path2D路径
-    rotatePath(shape?): Shape {
+    rotatePath(): Shape {
         // circle和ellipse不使用该方法
         if(this._type === 'circle' || this._type === 'ellipse') return this;
 
@@ -377,7 +433,7 @@ export class Shape extends Base {
     }
 
     // 形变path2D路径
-    transFormPath(shape?): Shape {
+    transFormPath(): Shape {
         let tPath = new Path2D();
         tPath.addPath(this.path, transform(Matrix.transformMatrix, this._center, this._transform));
         this.path = tPath;

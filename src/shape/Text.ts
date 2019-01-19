@@ -1,85 +1,51 @@
-import { Base } from "./BaseShape";
+import { Base, Shape, shapeConfig } from "./BaseShape";
 
 
-class textConfig {
-    pin: number[]; //*
+class textConfig extends shapeConfig {
     content: string;  //*
-    fontSize: number;
-    opacity: number;
-    color: string;
-    rotate: number;
-    fill: boolean;
-    align: CanvasTextAlign;
-    dir: CanvasDirection;
-    maxWidth: number;
-    mounted: Function;
-    removed: Function;
+    fontSize?: number;
+    align?: CanvasTextAlign;
+    dir?: CanvasDirection;
+    maxWidth?: number;
 }
 
 
-export class TextBlock extends Base {
-    private _x: number;
-    private _y: number;
-    private _color: string;
-    private _fill: boolean;
+export class TextBlock extends Shape {
     private _fontSize: number;
-    private _opacity: number;
     private _content: string;
     private _maxWidth: number;
-    private _rotate: number;
     private _align: CanvasTextAlign;
     private _direction: CanvasDirection;
 
     private font: string;
-    private center: number[];
     private compositeRotate: number;
     private compositeCenter: number[];
 
     constructor(config: textConfig) {
         super(config, 'Text');
 
-        this._x = config.pin[0];
-        this._y = config.pin[1];
-        this._color = config.color;
-        this._fill = (config.fill === undefined)? true: config.fill;
         this._maxWidth = config.maxWidth || null;
         this._fontSize = config.fontSize || 10;
-        this._opacity = config.opacity || 1;
-        this._rotate = config.rotate || 0;
         this._content = config.content || '';
         this._align = config.align || 'start';
         this._direction = config.dir || 'inherit';
 
-        this._mounted = config.mounted || (() => {});
-        this._removed = config.removed || (() => {});
-
         this.font = 'px sans-serif';
-        this.center = [];
+        this._center = [];
         this.compositeCenter = [];
         this.compositeRotate = 0;
 
-        this.writableProperties = ['x', 'y', 'color', 'opacity', 'rotate', 'show', 'align', 'dir', 'content', 'fontSize'];
-        this.readonlyProperties.push('center');
-
         this.initSetter();
-
-        this.notRePathProperties = this.readableProperties;
     }
 
     config() {
         return {
-            pin: [this._x, this._y],
+            ...this.getBaseConfig(),
             content: this._content,
             fontSize: this._fontSize,
-            opacity: this._opacity,
-            color: this._color,
-            rotate: this._rotate,
-            fill: this._fill,
             align: this._align,
             dir: this._direction,
             maxWidth: this._maxWidth,
-            mounted: this._mounted,
-            removed: this._removed
         };
     }
 
@@ -96,7 +62,16 @@ export class TextBlock extends Base {
         ctx.translate(-center[0], -center[1]);
     }
 
-    
+    /** -------------------PATH2D路径---------------------------- */
+
+    drawPath(): TextBlock { return this; }
+
+    // 旋转path2D路径
+    rotatePath(): TextBlock { return this; }
+
+    // 形变path2D路径
+    transFormPath(): TextBlock { return this; }
+
     render(ctx: CanvasRenderingContext2D) {
         if(!this._show) return; 
 

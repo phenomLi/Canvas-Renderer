@@ -4,12 +4,13 @@ import Broadcast from './Broadcast/Broadcast';
 import { EventSystem } from './event/core';
 import Animation from './animation/core';
 
+
 /* ------------------------------------------------------------------------------------------ */
 
 export default (function(window, document) {
 
 class canvasConfig {
-    backgroundColor: string;
+    backgroundColor?: string;
     width: number | string;
     height: number | string;
 }

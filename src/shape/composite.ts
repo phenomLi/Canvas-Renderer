@@ -32,8 +32,6 @@ export class Composite extends Shape {
         this.deep = config.deep === undefined? true: config.deep;
         this._center = config.center;
 
-        this.writableProperties = ['x', 'y', 'center', 'rotate', 'transform', 'show'];
-
         this.shapeList = [];
 
         if(config && config.shapes) {
@@ -64,6 +62,7 @@ export class Composite extends Shape {
     config() {
         return {
             ...this.getBaseConfig(),
+            deep: this.deep,
             shapes: this.shapeList,
         }
     }
@@ -144,7 +143,7 @@ export class Composite extends Shape {
     }
 
     // 以Composite容器为中心对每个字图形进行旋转
-    rotatePath(shape: CompositeContainType): Shape {
+    rotatePath(shape?: CompositeContainType): Composite {
         if(shape.attr('type') === 'Composite') {
             DFS((<Composite>shape).getShapeList(), item => {
                 let tPath = new Path2D();
@@ -165,7 +164,7 @@ export class Composite extends Shape {
     }
 
     // 以Composite容器为中心对每个字图形进行形变
-    transFormPath(shape: CompositeContainType): Shape {
+    transFormPath(shape?: CompositeContainType): Composite {
         if(shape.attr('type') === 'Composite') {
             DFS((<Composite>shape).getShapeList(), item => {
                 let tPath = new Path2D();

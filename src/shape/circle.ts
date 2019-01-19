@@ -15,8 +15,6 @@ export class Circle extends Shape {
 
         this._center = [this._x, this._y];
         this._radius = config.radius;
-        
-        this.writableProperties.push('radius');
 
         this.initSetter();
         this.drawPath().transFormPath();

@@ -21,8 +21,6 @@ export class Triangle extends Shape {
         this.height = Math.sqrt(this._edge*this._edge - this.midEdge*this.midEdge);
         this._center = [this._x, this._y + this.height/2];
 
-        this.writableProperties.push('edge');
-
         this.initSetter();
         this.drawPath().rotatePath().transFormPath();
     }
