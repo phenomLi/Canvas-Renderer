@@ -15,9 +15,12 @@
 <body>
     
 
-<canvas id="canvas" style="background-color: #eee" width="500" height="500">
-
+<canvas id="canvas" style="background-color: #eee">
 </canvas>
+
+<div>
+    <button id="btn">点击</button>
+</div>
 
 
 <script src="./dist/bundle.js"></script>
@@ -89,7 +92,14 @@ const r2 = new p.shapes.Rectangle({
     fill: true,
     color: 'orange',
     onClick: function(e) {
-        this.attr('rotate', clickFlag? 45: 0);
+        this.animateTo({
+            target: {
+                width: clickFlag? 200: 120,
+                height: clickFlag? 200: 90
+            },
+            duration: 500,
+            timingFunction: 'easeOut'
+        });
         clickFlag = !clickFlag;
     }
 });
@@ -112,58 +122,92 @@ const r2 = new p.shapes.Rectangle({
 // });
 
 
-const g1 = new p.shapes.Group();
+// const g1 = new p.shapes.Group();
 
 
-p.append(r1);
-p.append(rr1);
-p.append(r2);
+// p.append(r1);
+// p.append(rr1);
+// p.append(r2);
 
-const myAnimation = new p.animation({
-    value: [50, 300],
-    timingFunction: 'easeOutBounce',
-    render: function(v1) {
-        r1.attr('x', v1);
-    }
-});
+// const myAnimation = new p.animation({
+//     value: [50, 300],
+//     timingFunction: 'easeOutBounce',
+//     render: function(v1) {
+//         r1.attr('x', v1);
+//     }
+// });
 
-myAnimation
-.next({
-    value: [50, 300],
-    timingFunction: 'easeOutBounce',
-    render: function(v) {
-        r1.attr('y', v);
-    }
-}).next({
-    value: [300, 50],
-    timingFunction: 'easeOutBounce',
-    render: function(v) {
-        r1.attr('x', v);
-    }
-}).next({
-    value: [300, 50],
-    timingFunction: 'easeOutBounce',
-    render: function(v) {
-        r1.attr('y', v);
-    }
-}).loop();
-
-
-
-rr1.unbind('click');
-rr1.unbind('keypress', 39);
+// myAnimation
+// .next({
+//     value: [50, 300],
+//     timingFunction: 'easeOutBounce',
+//     render: function(v) {
+//         r1.attr('y', v);
+//     }
+// }).next({
+//     value: [300, 50],
+//     timingFunction: 'easeOutBounce',
+//     render: function(v) {
+//         r1.attr('x', v);
+//     }
+// }).next({
+//     value: [300, 50],
+//     timingFunction: 'easeOutBounce',
+//     render: function(v) {
+//         r1.attr('y', v);
+//     }
+// }).loop();
 
 
-console.log('图形数量:' + p.getShapesCount());
+
+// rr1.unbind('click');
+// rr1.unbind('keypress', 39);
+
+
+
+document.getElementById('btn').onclick = function() {
+    for(let i = 0; i < 5; i++) {
+        let circle = new p.shapes.Circle({
+            pin: [0, 0],
+            radius: 10,
+            color: 'red'
+        });
+
+        p.append(circle);
+
+        let motion = new p.motion(circle);
+
+        motion.threshold(m => {
+            if(m.pos.y >= p.getHeight() - 10) {
+                m.pos.y = p.getHeight() - 10;
+                m.vel.y *= -0.7;
+            }
+        }).threshold(m => {
+            if(m.pos.y >= p.getHeight() - 10) {
+                if(m.vel.x > 0.02) {
+                    m.vel.x += -0.03;
+                    m.pos.x += m.vel.x;
+                }
+                else {
+                    m.vel.x = 0;
+                    m.vel.y = 0;
+                }
+            }
+        })
+        .start([5*Math.random(), 0], [0, 0.4]);
+    };
+};
+
+
+
+
+
+
+
 
 
 
 
 </script>
-<!-- <script>
-
-
-
-</script> -->
 </body>
 </html>

@@ -53,22 +53,8 @@ export function transform(matrix: DOMMatrix, center: Array<number>, matrixArray:
 }
 
 
-// 矩阵相乘 
-export function matrixMulti(m1: DOMMatrix, m2: DOMMatrix, m: DOMMatrix): DOMMatrix {
-    if(m1 === null && m2 === null) return null;
-    else if(m1 === null && m2 !== null) return m2;
-    else if(m1 !== null && m2 === null) return m1;
-    else {
-        m.a = m1.a*m2.a + m1.c*m2.b;
-        m.b = m1.b*m2.a + m1.d*m2.b;
-        m.c = m1.a*m2.c + m1.c*m2.d;
-        m.d = m1.b*m2.c + m1.d*m2.d;
-        m.e = m1.a*m2.e + m1.c*m2.f + m1.e;
-        m.f = m1.b*m2.e + m1.d*m2.f + m1.f;
 
-        return m;
-    }
-}
+
 
 
 // 判断坐标是否在某个图形内

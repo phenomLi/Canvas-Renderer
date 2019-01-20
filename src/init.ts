@@ -3,6 +3,7 @@ import { shapeHeap } from './render/core';
 import Broadcast from './Broadcast/Broadcast';
 import { EventSystem } from './event/core';
 import Animation from './animation/core';
+import Motion from './motion/core';
 
 
 /* ------------------------------------------------------------------------------------------ */
@@ -69,7 +70,8 @@ class init {
     // 开放的api
     public shapes;
     public utils;
-    public animation;
+    public animation: Function;
+    public motion: Function;
 
     constructor(canvasEle: HTMLCanvasElement, config: canvasConfig) {
         this.canvasEle = canvasEle;
@@ -102,6 +104,8 @@ class init {
         this.utils = utils;
         // 暴露动画api
         this.animation = Animation;
+        // 暴露运动api
+        this.motion = Motion;
     }
 
 

@@ -157,7 +157,7 @@ export default class Animation {
 
             this._onStart();
 
-            window.requestAnimationFrame(this.animationFrame.bind(this));
+            this.animationFrame();
         }, this._delay);
     }
 
