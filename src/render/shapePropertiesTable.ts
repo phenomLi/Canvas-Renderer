@@ -3,18 +3,26 @@
 // properties管理器，用作添加或者删除properties
 const PropertiesManager = {
     baseProp: {
+        // 可写属性
         writableProperties: [],
+        // 只读属性
         readonlyProperties: [],
+        // 可动画属性
         animateProperties: [],
+        // 不用重新绘制路径的属性
         notRePathProperties: [],
-        readableProperties: []
+        // 可读
+        readableProperties: [],
+        // 必填属性
+        requiredProperties: []
     },
 
     init() {
-        this.baseProp.writableProperties = ['x', 'y', 'color', 'fill', 'opacity', 'rotate', 'transform', 'show'];
-        this.baseProp.readonlyProperties = ['id', 'type', 'center'];
+        this.baseProp.writableProperties = ['x', 'y', 'color', 'fill', 'opacity', 'rotate', 'transform', 'show', 'zIndex'];
+        this.baseProp.readonlyProperties = ['id', 'type', 'center', 'tag'];
         this.baseProp.animateProperties = ['x', 'y', 'color', 'opacity', 'rotate'];
         this.baseProp.notRePathProperties = ['color', 'fill', 'opacity', 'show'];
+        this.baseProp.requiredProperties = ['pin'];
         this.baseProp.readableProperties = [];
 
         return this;
@@ -51,6 +59,11 @@ const PropertiesManager = {
     },
     notRePathProperties(op: string, prop: string | string[]) {
         this.handle(op, 'notRePathProperties', prop);
+        return this;
+    },
+
+    requiredProperties(op: string, prop: string | string[]) {
+        this.handle(op, 'requiredProperties', prop);
         return this;
     },
 
@@ -96,14 +109,33 @@ export default {
 
         PropertiesManager['writableProperties']('add', 'radius');
         PropertiesManager['animateProperties']('add', 'radius');
+        PropertiesManager['requiredProperties']('add', 'radius');
+
+        return PropertiesManager.get();
+    })(),
+    Ring: (() => {
+        PropertiesManager.init();
+
+        PropertiesManager['writableProperties']('add', ['radius', 'width']);
+        PropertiesManager['animateProperties']('add', ['radius', 'width']);
+        PropertiesManager['requiredProperties']('add', ['radius', 'width']);
+
+        return PropertiesManager.get();
+    })(),
+    Sector: (() => {
+        PropertiesManager.init();
+
+        PropertiesManager['writableProperties']('add', ['radius', 'range']);
+        PropertiesManager['animateProperties']('add', ['radius', 'range']);
+        PropertiesManager['requiredProperties']('add', ['radius', 'range']);
 
         return PropertiesManager.get();
     })(),
     Ellipse: (() => {
         PropertiesManager.init();
         PropertiesManager['writableProperties']('add', ['radiusX', 'radiusY']);
-        PropertiesManager['writableProperties']('remove', 'transform');
         PropertiesManager['animateProperties']('add', ['radiusX', 'radiusY']);
+        PropertiesManager['requiredProperties']('add', 'radius');
 
         return PropertiesManager.get();
     })(),
@@ -111,6 +143,7 @@ export default {
         PropertiesManager.init();
         PropertiesManager['writableProperties']('add', ['width', 'height']);
         PropertiesManager['animateProperties']('add', ['width', 'height']);
+        PropertiesManager['requiredProperties']('add', ['edge']);
 
         return PropertiesManager.get();
     })(),
@@ -118,6 +151,7 @@ export default {
         PropertiesManager.init();
         PropertiesManager['writableProperties']('add', ['round', 'height', 'width']);
         PropertiesManager['animateProperties']('add', ['round', 'height', 'width']);
+        PropertiesManager['requiredProperties']('add', ['round', 'edge']);
 
         return PropertiesManager.get();
     })(),
@@ -125,11 +159,30 @@ export default {
         PropertiesManager.init();
         PropertiesManager['writableProperties']('add', 'edge');
         PropertiesManager['animateProperties']('add', 'edge');
+        PropertiesManager['requiredProperties']('add', 'edge');
 
         return PropertiesManager.get();
     })(),
-    Custom: PropertiesManager.init().get(),
-    SVGPath: PropertiesManager.init()['writableProperties']('add', 'svgPath').get(),
+    Polygon: (() => {
+        PropertiesManager.init();
+        PropertiesManager['writableProperties']('add', 'path');
+        PropertiesManager['requiredProperties']('add', 'path');
+
+        return PropertiesManager.get();
+    })(),
+    Custom: (() => {
+        PropertiesManager.init();
+        PropertiesManager['requiredProperties']('add', 'center');
+
+        return PropertiesManager.get();
+    })(),
+    SVGPath: (() => {
+        PropertiesManager.init()
+        PropertiesManager['writableProperties']('add', 'svgPath');
+        PropertiesManager['requiredProperties']('add', ['svgPath', 'center']);
+         
+        return PropertiesManager.get();
+    })(),
     Text: (() => {
         PropertiesManager.init();
         PropertiesManager['writableProperties']('remove', 'transform');
@@ -148,6 +201,8 @@ export default {
         PropertiesManager['writableProperties']('remove', ['color', 'fill', 'opacity']);
         PropertiesManager['animateProperties']('remove', ['color', 'opacity']);
         PropertiesManager['notRePathProperties']('remove', ['color', 'fill', 'opacity']);
+
+        PropertiesManager['requiredProperties']('add', 'center');
 
         return PropertiesManager.get();
     })(),

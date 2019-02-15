@@ -49,7 +49,7 @@ export class TextBlock extends Shape {
         };
     }
 
-    // 若text被加入composite，则叠加旋转(获取composite的center和rotate)
+    // 若 text 被加入 composite，则叠加旋转(获取 composite 的 center 和 rotate)
     setCompositeRotate(center: number[], deg: number) {
         this.compositeCenter = center;
         this.compositeRotate = deg;

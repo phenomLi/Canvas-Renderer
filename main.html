@@ -10,17 +10,22 @@
     padding: 0;
     margin: 0;
 }
+
+#container {
+    width: 100%;
+    height: 500px;
+    background-color: #eee;
+}
 </style>
 </head>
 <body>
     
 
-<canvas id="canvas" style="background-color: #eee">
-</canvas>
+<div id="container"></div>
 
-<div>
-    <button id="btn">点击</button>
-</div>
+
+
+
 
 
 <script src="./dist/bundle.js"></script>
@@ -28,11 +33,9 @@
 
 
 const prender = P2.default;
+const container = document.getElementById("container");
 
-const p = new prender(document.getElementById("canvas"), {
-    width: 'fullWidth',
-    height: 500
-});
+const p = new prender(container);
 
 
 let clickFlag = true;
@@ -83,53 +86,43 @@ const r1 = new p.shapes.Rectangle({
     pin: [50, 50],
     edge: [90, 120],
     fill: true,
-    color: 'blue'
+    color: 'blue',
+    zIndex: -1
 });
 
 const r2 = new p.shapes.Rectangle({
     pin: [140, 50],
     edge: [120, 90],
     fill: true,
-    color: 'orange',
-    onClick: function(e) {
-        this.animateTo({
-            target: {
-                width: clickFlag? 200: 120,
-                height: clickFlag? 200: 90
-            },
-            duration: 500,
-            timingFunction: 'easeOut'
-        });
-        clickFlag = !clickFlag;
-    }
+    color: 'orange'
 });
 
 
 
-// const text1 = new p.shapes.Text({
-//     pin: [r2.attr('x'), r2.attr('y') + 20],
-//     content: 'PHENOM',
-//     color: '#666',
-//     fontSize: 20,
-//     rotate: 45
-// });
+const text1 = new p.shapes.Text({
+    pin: [r2.attr('x'), r2.attr('y') + 20],
+    content: 'PHENOM',
+    color: '#666',
+    fontSize: 20,
+    zIndex: 1
+});
 
 
-// const c1 = new p.shapes.Composite({
-//     pin: [r2.attr('x'), r2.attr('y')],
-//     shapes: [r2, text1],
-//     center: r2.attr('center')
-// });
+const c1 = new p.shapes.Composite({
+    pin: [r2.attr('x'), r2.attr('y')],
+    shapes: [r2, text1],
+    center: r2.attr('center')
+});
 
 
-// const g1 = new p.shapes.Group();
+const g1 = new p.shapes.Group();
 
 
 // p.append(r1);
-// p.append(rr1);
-// p.append(r2);
+p.append(rr1);
+p.append(text1);
 
-// const myAnimation = new p.animation({
+// const myAnimation1 = new p.animation({
 //     value: [50, 300],
 //     timingFunction: 'easeOutBounce',
 //     render: function(v1) {
@@ -137,7 +130,7 @@ const r2 = new p.shapes.Rectangle({
 //     }
 // });
 
-// myAnimation
+// myAnimation1
 // .next({
 //     value: [50, 300],
 //     timingFunction: 'easeOutBounce',
@@ -158,45 +151,27 @@ const r2 = new p.shapes.Rectangle({
 //     }
 // }).loop();
 
+// const myAnimation2 = new p.animation({
+//     value: [[120, 200], [90, 200]],
+//     timingFunction: 'easeOutBounce',
+//     duration: 450,
+//     render: function(v1, v2) {
+//         r2.attr('width', v1).attr('height', v2);
+//     }
+// });
+
+// myAnimation2.next({
+//     value: [[200, 120], [200, 90]],
+//     timingFunction: 'easeOutBounce',
+//     duration: 450,
+//     render: function(v1, v2) {
+//         r2.attr('width', v1).attr('height', v2);
+//     }
+// }).loop();
 
 
-// rr1.unbind('click');
-// rr1.unbind('keypress', 39);
 
 
-
-document.getElementById('btn').onclick = function() {
-    for(let i = 0; i < 5; i++) {
-        let circle = new p.shapes.Circle({
-            pin: [0, 0],
-            radius: 10,
-            color: 'red'
-        });
-
-        p.append(circle);
-
-        let motion = new p.motion(circle);
-
-        motion.threshold(m => {
-            if(m.pos.y >= p.getHeight() - 10) {
-                m.pos.y = p.getHeight() - 10;
-                m.vel.y *= -0.7;
-            }
-        }).threshold(m => {
-            if(m.pos.y >= p.getHeight() - 10) {
-                if(m.vel.x > 0.02) {
-                    m.vel.x += -0.03;
-                    m.pos.x += m.vel.x;
-                }
-                else {
-                    m.vel.x = 0;
-                    m.vel.y = 0;
-                }
-            }
-        })
-        .start([5*Math.random(), 0], [0, 0.4]);
-    };
-};
 
 
 

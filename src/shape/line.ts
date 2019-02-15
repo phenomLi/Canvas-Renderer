@@ -69,7 +69,10 @@ class Line {
         this.endY = y;
     }
 
-    end() {
+    end(closePath: boolean = true) {
+
+        closePath && this.tPath.closePath();
+
         this.path.addPath(this.tPath, Matrix.translateMatrix);
         Matrix.translateMatrix.e = Matrix.translateMatrix.f = 0;
     } 

@@ -2,7 +2,6 @@ import { event, keyBoardEvent } from '../event/core';
 import { rotate, transform } from '../util/util';
 import { Matrix } from '../render/core';
 import Broadcast from './../Broadcast/Broadcast';
-import { Composite } from './composite';
 import Animation from './../animation/core';
 import ShapePropertiesTable from './../render/shapePropertiesTable';
 
@@ -11,6 +10,8 @@ import ShapePropertiesTable from './../render/shapePropertiesTable';
 export class Base {
     protected _id: symbol;
     protected _type: string;
+    protected _tag: string | number;
+    protected _zIndex: number;
     protected _show: boolean;
     protected _mounted: Function;
     protected _removed: Function;
@@ -24,6 +25,12 @@ export class Base {
         this._type = type;
         this._show = true;
 
+        this._tag = (config && config.tag)? config.tag: '';
+        this._zIndex = (config && config.zIndex)? config.zIndex: 0;
+
+        this._mounted = (config && config.mounted)? config.mounted: () => {};
+        this._removed = (config && config.removed)? config.removed: () => {};
+
         this.isMount = false;
         this.count = 1;
     }
@@ -33,8 +40,8 @@ export class Base {
         ShapePropertiesTable[this._type].writableProperties.map(attr => {
             let upperCaseAttr = attr.substring(0, 1).toUpperCase() + attr.substring(1);
 
-            if(this[`set${upperCaseAttr}`] === undefined) {
-                this[`set${upperCaseAttr}`] = function(val) {
+            if(this[`setter${upperCaseAttr}`] === undefined) {
+                this[`setter${upperCaseAttr}`] = function(val) {
                     this[`_${attr}`] = val;
                     
                     if(!ShapePropertiesTable[this._type].notRePathProperties.includes(attr)) {
@@ -49,13 +56,13 @@ export class Base {
     public attr(attr: string, val?: any): any | Base {
         if(!ShapePropertiesTable[this._type].readableProperties.includes(attr)) {
             console.warn(`${attr}属性不存在`);
-            return;
+            return this;
         }
 
         if(val !== undefined) {
             if(ShapePropertiesTable[this._type].writableProperties.includes(attr)) {
-                this[`set${attr.substring(0, 1).toUpperCase() + attr.substring(1)}`](val);
-                this.isMount && Broadcast.notify('update');
+                this[`setter${attr.substring(0, 1).toUpperCase() + attr.substring(1)}`](val);
+                this.isMount && Broadcast.notify('update', this._zIndex);
             }
             else console.warn(`${attr}不能被修改`);
 
@@ -83,10 +90,15 @@ export class Base {
     // 返回图形数量
     getCount(): number { return this.count; }
 
-    getShapeList() { return null; };
+    getShapeList() { 
+        throw "此方法必须由子类重写";
+        return null; 
+    };
 
     // 需重载函数: 返回配置项
-    config() {};
+    config() {
+        throw "此方法必须由子类重写";
+    };
 
 
 
@@ -108,16 +120,27 @@ export class Base {
     /**-------------------------PATH-------------------------- */
 
     // 定义path2D路径(需重载)
-    drawPath(): Base { return this; }
+    drawPath(): Base { 
+        throw "此方法必须由子类重写";
+        return this; 
+    }
 
     // 旋转path2D路径(需重载)
-    rotatePath(): Base { return this; }
+    rotatePath(): Base { 
+        throw "此方法必须由子类重写";
+        return this; 
+    }
 
     // 形变path2D路径(需重载)
-    transFormPath(): Base { return this; }
+    transFormPath(): Base { 
+        throw "此方法必须由子类重写";
+        return this; 
+    }
 
     // 渲染图形到canvas(需重载)
-    render(ctx: CanvasRenderingContext2D) {}
+    render(ctx: CanvasRenderingContext2D) {
+        throw "此方法必须由子类重写";
+    }
 }
 
 
@@ -127,6 +150,10 @@ export class Base {
 export class shapeConfig {
     // 位置
     pin: Array<number>; //*
+    // 标签
+    tag: string | number;
+    //层级
+    zIndex: number;
     // 颜色
     color?: string;
     // 是否填充
@@ -178,6 +205,7 @@ export class Shape extends Base {
     protected _fill: boolean;
     protected _opacity: number;
     protected _rotate: number;
+    protected _lastRotate: number;
     protected _transform: Array<Array<number>>;
     protected _fillRule: boolean;
 
@@ -190,18 +218,23 @@ export class Shape extends Base {
 
     constructor(config: shapeConfig, type: string) {
         super(config, type);
+        
+        // 必填属性检测
+        ShapePropertiesTable[type].requiredProperties.map(item => {
+            if(config[item] === undefined) {
+                throw `${item}为${type}的必填属性`;
+            }
+        });
 
         this._x = config.pin[0];
         this._y = config.pin[1];
-        this._color = config.color;
+        this._color = config.color || '#000';
         this._fill = (config.fill === undefined)? true: config.fill;
         this._opacity = config.opacity || 1;
         this._rotate = config.rotate || 0;
+        this._lastRotate = this._rotate;
         this._transform = config.transform || [];
-        this._mounted = config.mounted || (() => {});
-        this._removed = config.removed || (() => {});
-        this._fillRule = true;
-        
+
         this.mouseIn = false;
         this.eventList = [];
         this.camelCaseEventName = {};
@@ -224,6 +257,8 @@ export class Shape extends Base {
             fill: this._fill,
             rotate: this._rotate,
             transform: this._transform,
+            zIndex: this._zIndex,
+            tag: this._tag,
             ...this.camelCaseEventName,
 
             // hook
@@ -255,7 +290,7 @@ export class Shape extends Base {
     /**--------------------重载的setter-------------------- */
 
     // 重载setter（x）
-    protected setX(x: number) {
+    protected setterX(x: number) {
         let d = x - this._x;
         this._x = x;
         this._center[0] = this._center[0] + d;
@@ -264,12 +299,29 @@ export class Shape extends Base {
     }
 
     // 重载setter（y）
-    protected setY(y: number) {
+    protected setterY(y: number) {
         let d = y - this._y;
         this._y = y;
         this._center[1] = this._center[1] + d;
 
         this.drawPath().rotatePath().transFormPath();
+    }
+
+    // 重载setter（zIndex）
+    protected setterZIndex(zIndex: number) {
+        if(zIndex === this._zIndex) return;
+
+        Broadcast.notify('remove', {
+            shape: this,
+            zIndex: this._zIndex
+        });
+
+        Broadcast.notify('append', {
+            shape: this,
+            zIndex: zIndex
+        });
+
+        this._zIndex = zIndex;
     }
 
     /** -------------------事件---------------------------- */
@@ -283,7 +335,8 @@ export class Shape extends Base {
                     Broadcast.notify('add_event', {
                         shape: this,
                         eventName: item.eventName,
-                        fn: i
+                        fn: i,
+                        zIndex: this._zIndex
                     });
                 });
             }
@@ -291,7 +344,8 @@ export class Shape extends Base {
                 Broadcast.notify('add_event', {
                     shape: this,
                     eventName: item.eventName,
-                    fn: item.fn
+                    fn: item.fn,
+                    zIndex: this._zIndex
                 });
             }
         });
@@ -365,12 +419,29 @@ export class Shape extends Base {
 
     /** -------------------动画---------------------------- */
 
+    /**
+     * 
+     * @param config 
+     * 如：{
+     *      target: {
+     *          x: 200,
+     *          y: 400
+     *      },
+     *      duration: 1000,
+     *      delay: 2000,
+     *      timingFunction: 'easeOut'
+     * } 
+     */
+
     animateTo(config: animationConfig, fn?: Function) {
         let values = [], that = this;
 
         for(let prop in config.target) {
             if(ShapePropertiesTable[that._type].animateProperties.includes(prop)) {
                 values.push([that['_' + prop], config.target[prop]]);
+            }
+            else {
+                delete config.target[prop];
             }
         }
 
@@ -383,9 +454,7 @@ export class Shape extends Base {
                 let index = 0;
 
                 for(let prop in config.target) {
-                    if(ShapePropertiesTable[that._type].animateProperties.includes(prop)) {
-                        that.attr(prop, arguments[index++]);
-                    }
+                    that.attr(prop, arguments[index++]);
                 }
             }
         })).final(fn);
@@ -422,21 +491,31 @@ export class Shape extends Base {
 
     // 旋转path2D路径
     rotatePath(): Shape {
-        // circle和ellipse不使用该方法
-        if(this._type === 'circle' || this._type === 'ellipse') return this;
+        // circle, ring 和 ellipse 不使用该方法
+        if(
+            this._type === 'circle' || 
+            this._type === 'ellipse' ||
+            this._type === 'Ring'
+        ) return this;
 
-        let tPath = new Path2D();
-        tPath.addPath(this.path, rotate(Matrix.rotateMatrix, this._center, this._rotate));
-        this.path = tPath;
+        if(this._lastRotate !== this._rotate) {
+            let tPath = new Path2D();
+            tPath.addPath(this.path, rotate(Matrix.rotateMatrix, this._center, this._rotate));
+            this.path = tPath;
+
+            this._lastRotate = this._rotate;
+        }
 
         return this;
     }
 
     // 形变path2D路径
     transFormPath(): Shape {
-        let tPath = new Path2D();
-        tPath.addPath(this.path, transform(Matrix.transformMatrix, this._center, this._transform));
-        this.path = tPath;
+        if(this._transform.length) {
+            let tPath = new Path2D();
+            tPath.addPath(this.path, transform(Matrix.transformMatrix, this._center, this._transform));
+            this.path = tPath;
+        }
 
         return this;
     }
@@ -449,7 +528,7 @@ export class Shape extends Base {
 
         if(this._fill) {
             ctx.fillStyle = this._color;
-            ctx.fill(this.path, this._fillRule? 'nonzero': 'evenodd');
+            ctx.fill(this.path);
         }
         else {
             ctx.strokeStyle = this._color;

@@ -1,12 +1,14 @@
 import { Shape } from '../shape/BaseShape';
 import { Composite } from '../shape/composite';
 import { isInShape } from '../util/util';
+import Broadcast from '../Broadcast/Broadcast';
 
 
 export class eventInfo {
-    shape: Shape | Composite;
+    shape: Shape;
     eventName: string;
     fn: ((e: event) => {}) | keyBoardEvent;
+    zIndex: number;
 }
 
 
@@ -16,7 +18,7 @@ export class keyBoardEvent {
 }
 
 export class event {
-    target: Shape | Composite;
+    target: Shape;
     // 鼠标坐标
     x: number;
     y: number;
@@ -24,10 +26,10 @@ export class event {
 
 
 export class EventSystem {
-    private canvasEle: HTMLCanvasElement;
-    private ctx: CanvasRenderingContext2D;
-    private canvasTop: number;
-    private canvasLeft: number;
+    private container: HTMLElement;
+    private layerMap: object;
+    private containerTop: number;
+    private containerLeft: number;
 
     private eventList: Array<string> = ['click', 'mousemove', 'keypress', 'mouseover', 'mouseout'];
     
@@ -35,25 +37,30 @@ export class EventSystem {
     private mouseoverEventList: Array<eventInfo>;
     private mouseoutEventList: Array<eventInfo>;
     private mousemoveEventList: Array<eventInfo>;
-    // private mousedownEventList: Array<eventInfo>;
-    // private mouseupEventList: Array<eventInfo>;
+    private mousedownEventList: Array<eventInfo>;
+    private mouseupEventList: Array<eventInfo>;
 
     //键盘数字对应表
     private keypressEventMap;
 
-    constructor(canvasEle: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
-        this.canvasEle = canvasEle;
-        this.canvasLeft = canvasEle.getBoundingClientRect().left;
-        this.canvasTop = this.canvasEle.getBoundingClientRect().top;
-        this.ctx = ctx;
+    constructor(container: HTMLElement, layerMap: object) {
+        this.container = container;
+        this.layerMap = layerMap;
+        this.containerLeft = container.scrollLeft + container.clientLeft;
+        this.containerTop = container.scrollTop + container.clientTop;
 
         this.clickEventList = [];
         this.mouseoverEventList = [];
         this.mouseoutEventList = [];
         this.mousemoveEventList = [];
-        // this.mousedownEventList = [];
-        // this.mouseupEventList = [];
+        this.mousedownEventList = [];
+        this.mouseupEventList = [];
         this.keypressEventMap = {};
+
+        //初始化广播器(监听者：事件系统管理器的事件添加方法)
+        Broadcast.addListener('add_event', this.addEvent.bind(this));
+        //初始化广播器(监听者：事件系统管理器的事件删除方法)
+        Broadcast.addListener('del_event', this.delEvent.bind(this));
 
         this.init();
     }
@@ -80,12 +87,12 @@ export class EventSystem {
     bindMouseEvent() {
         
         // 点击事件
-        this.canvasEle.addEventListener('click', ev => {
-            let x = ev['clientX'] - this.canvasLeft,
-                y = ev['clientY'] - this.canvasTop; 
+        this.container.addEventListener('click', ev => {
+            let x = ev['clientX'] - this.containerLeft,
+                y = ev['clientY'] - this.containerTop; 
 
             this['clickEventList'].map((eventInfo: eventInfo) => {
-                if(isInShape(this.ctx, eventInfo.shape, x, y)) {
+                if(isInShape(eventInfo['ctx'], eventInfo.shape, x, y)) {
                     // 触发click（一次）
                     this.omitEvent(eventInfo.shape, <(e: event) => {}>eventInfo.fn, x, y);
                 }
@@ -93,13 +100,38 @@ export class EventSystem {
         });
 
 
+        // 鼠标按下、释放事件
+        this.container.addEventListener('mousedown', ev => {
+            let x = ev['clientX'] - this.containerLeft,
+                y = ev['clientY'] - this.containerTop; 
+
+            this['mousedownEventList'].map((eventInfo: eventInfo) => {
+                if(isInShape(eventInfo['ctx'], eventInfo.shape, x, y)) {
+                    // 触发
+                    this.omitEvent(eventInfo.shape, <(e: event) => {}>eventInfo.fn, x, y);
+                }
+            });
+        });
+        this.container.addEventListener('mouseup', ev => {
+            let x = ev['clientX'] - this.containerLeft,
+                y = ev['clientY'] - this.containerTop; 
+
+            this['mouseupEventList'].map((eventInfo: eventInfo) => {
+                if(isInShape(eventInfo['ctx'], eventInfo.shape, x, y)) {
+                    // 触发
+                    this.omitEvent(eventInfo.shape, <(e: event) => {}>eventInfo.fn, x, y);
+                }
+            });
+        });
+
+
         // 移入移出
-        this.canvasEle.addEventListener('mousemove', ev => {
-            let x = ev['clientX'] - this.canvasLeft,
-                y = ev['clientY'] - this.canvasTop;  
+        this.container.addEventListener('mousemove', ev => {
+            let x = ev['clientX'] - this.containerLeft,
+                y = ev['clientY'] - this.containerTop;  
 
             this['mouseoverEventList'].map((eventInfo: eventInfo) => {
-                if(isInShape(this.ctx, eventInfo.shape, x, y)) {
+                if(isInShape(eventInfo['ctx'], eventInfo.shape, x, y)) {
                     // 若之前鼠标不在该图形上，而且现在鼠标在该图形上
                     if(!eventInfo.shape.isMouseIn()) {
                         // 触发mouseover（一次）
@@ -111,7 +143,7 @@ export class EventSystem {
             });
 
             this['mouseoutEventList'].map((eventInfo: eventInfo) => {
-                if(!isInShape(this.ctx, eventInfo.shape, x, y)) {
+                if(!isInShape(eventInfo['ctx'], eventInfo.shape, x, y)) {
                     // 若之前鼠标在该图形上，而且现在鼠标不在该图形上
                     if(eventInfo.shape.isMouseIn()) {
                         // 触发mouseout（一次）
@@ -123,7 +155,7 @@ export class EventSystem {
             });
 
             this['mousemoveEventList'].map((eventInfo: eventInfo) => {
-                if(isInShape(this.ctx, eventInfo.shape, x, y)) {
+                if(isInShape(eventInfo['ctx'], eventInfo.shape, x, y)) {
                     // 触发mousemove（多次）
                     this.omitEvent(eventInfo.shape, <(e: event) => {}>eventInfo.fn, x, y);
                     // 设置图形鼠标状态为true
@@ -147,6 +179,8 @@ export class EventSystem {
 
     // 添加事件
     addEvent(eventInfo: eventInfo) {
+        eventInfo['ctx'] = this.layerMap[eventInfo.zIndex].getCTX();
+
         if(eventInfo.eventName === 'keypress') {
             if(this.keypressEventMap[(<keyBoardEvent>eventInfo.fn).keyCode] === undefined) 
                 this.keypressEventMap[(<keyBoardEvent>eventInfo.fn).keyCode] = [];

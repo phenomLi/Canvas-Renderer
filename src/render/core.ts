@@ -1,5 +1,8 @@
 import { DFS, isInShape, isInPath } from '../util/util';
+import { shapeHeap } from './shapeHeap';
+import Layer from './layer';
 import Broadcast from './../Broadcast/Broadcast';
+
 import { Shape } from '../shape/BaseShape';
 import { Custom } from '../shape/Custom';
 import { Triangle } from '../shape/Triangle';
@@ -7,6 +10,9 @@ import { Circle } from '../shape/Circle';
 import { Rectangle } from '../shape/Rectangle';
 import { Ellipse } from './../shape/Ellipse';
 import { RoundRect } from './../shape/RoundRect';
+import { Ring } from './../shape/Ring';
+import { Sector } from './../shape/Sector';
+import { Polygon } from './../shape/Polygon'; 
 import { SVGPath } from './../shape/SVGPath';
 import { Group } from '../shape/Group';
 import { Composite } from '../shape/Composite';
@@ -14,74 +20,133 @@ import { TextBlock } from '../shape/Text';
 
  
 // 图形类
-export type ShapeType = Shape | Group | Composite | TextBlock;
-// 4个svg矩阵：旋转矩阵, 形变矩阵, 位移矩阵, 相乘结果矩阵
+export type ShapeType = Shape | Group | Composite;
+// 3个svg矩阵：旋转矩阵, 形变矩阵, 位移矩阵
 export const Matrix = {
     rotateMatrix: document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix(),
     transformMatrix: document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix(),
     translateMatrix: document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix()
 };
 
+// 图形元素集合
+export const shapes = {
+    Custom,
+    Circle,
+    Rectangle,
+    Triangle,
+    Group,
+    Composite,
+    Ellipse,
+    RoundRect,
+    Sector,
+    Ring,
+    Polygon,
+    SVGPath,
+    Text: TextBlock
+}
 
-class canvasInfo {
-    width: number;
-    height: number;
+// 实用函数集合
+export const utils = {
+    isInShape,
+    isInPath
 }
 
 
-// 画布元素堆
-export class shapeHeap {
-    // 图形个数
-    private count: number;
-    // canvas信息（长宽）
-    private canvasInfo: canvasInfo; 
-    // canvas上下文对象
-    private ctx: CanvasRenderingContext2D;
-    // 图形堆数组
-    private shapeHeapArray: Array<ShapeType> = new Array();
-    // 异步更新请求次数
-    private aSyncUpdateRequestCount: number;
-    // 更新请求次数
-    private updateRequestCount: number;
+// 容器管理器：管理所有layer
+export class ContainerManager {
+    private container: HTMLElement;
+    private containerSize: number[];
 
-    constructor(ctx: CanvasRenderingContext2D, canvasInfo: canvasInfo) {
-        this.count = 0;
-        this.ctx = ctx;
-        this.canvasInfo = canvasInfo;
-        this.aSyncUpdateRequestCount = 0;
-        this.updateRequestCount = 0;
+    // 默认zIndex为100
+    private defaultZIndex: number;
+    // 保存所有layer
+    private layerMap: object;
+    // 总图形数量
+    private totalShapeCount: number;
+
+    constructor(containerEle: HTMLElement) {
+        this.defaultZIndex = 100;
+        this.totalShapeCount = 0;
+        this.container = containerEle;
+        this.containerSize = [this.container.offsetWidth, this.container.offsetHeight];
+        this.layerMap = {};
+
+        //初始化广播器(监听者：容器管理器的界面克隆方法)
+        Broadcast.addListener('clone', this.clone.bind(this));
+
+        //初始化广播器(监听者：容器管理器的界面重刷方法)
+        Broadcast.addListener('update', this.update.bind(this));
+        //初始化广播器(监听者：容器管理器的界面添加方法)
+        Broadcast.addListener('append', this.append.bind(this));
+        //初始化广播器(监听者：容器管理器的界面移除方法)
+        Broadcast.addListener('remove', this.remove.bind(this));
     }
 
-    public getCount(): number {
-        return this.count;
+    private createLayer(zIndex: number) {
+        this.layerMap[zIndex] = new Layer(zIndex, this.defaultZIndex, this.container, this.containerSize);
     }
 
-    public append(shape: ShapeType) {
-        this.shapeHeapArray.push(shape);
+    /**---------------------公开方法----------------------- */
 
-        // 更改图形toggleMounted状态
-        shape.toggleMount(true);
-        // 更新画布中图形数量
-        this.count += shape.getCount();
-
-        Broadcast.notify('update');
+    public getHeight(): number {
+        return this.containerSize[0];
     }
 
-    public remove(shape: ShapeType) {
-        let id = shape.attr('id');
-        // 将要remove的图形在shapeHeapArray中去除
-        this.shapeHeapArray.map((item, index) => {
-            if(item.attr('id') === id) {
-                this.shapeHeapArray.splice(index, 1);
+    public getWidth(): number {
+        return this.containerSize[1];
+    }
+
+    public getTotalCount(): number {
+        for(let index in this.layerMap) {
+            this.totalShapeCount += this.layerMap[index].getCount();
+        }
+
+        return this.totalShapeCount;
+    }
+
+    public getLayerMap() {
+        return this.layerMap;
+    }
+
+
+    
+    public append(appendInfo): void {
+        let z = appendInfo['zIndex'];
+
+        if(this.layerMap[z] === undefined) {
+            this.createLayer(z);
+        }
+
+        this.layerMap[z].append(appendInfo['shape']);
+    }
+
+    public remove(removeInfo): void {
+        let z = removeInfo['zIndex'];
+
+        this.layerMap[z].remove(removeInfo['shape']);
+
+        if(this.layerMap[z].getCount() === 0) {
+            this.destroyLayer(z);
+        }
+    }
+
+    public destroyLayer(zIndex: number) {
+        this.container.removeChild(this.layerMap[zIndex].getCanvasElement());
+        delete this.layerMap[zIndex];
+    }
+
+    public update(zIndex: number) {
+        this.layerMap[zIndex].update();
+    }
+
+    public clear(): void {
+        for(let z in this.layerMap) {
+            this.layerMap[z].clear();
+
+            if(z !== '0') {
+                this.destroyLayer(parseInt(z));
             }
-        });
-
-        // 更改图形toggleMounted状态
-        shape.toggleMount(false);
-        // 更新画布中图形数量
-        this.count -= shape.getCount();
-
-        Broadcast.notify('update');
+        }
     }
 
     public clone(shape: ShapeType): ShapeType {
@@ -108,66 +173,7 @@ export class shapeHeap {
         }
     }
 
-    public clear() {
-        this.shapeHeapArray.map(item => {
-            item.toggleMount(false);
-        });
-
-        this.shapeHeapArray = [];
-        this.count = 0;
-        this.ctx.clearRect(0, 0, this.canvasInfo.width, this.canvasInfo.height);
-    }
-
-    /** 更新画布 */
-    public update() {
- 
-        this.updateRequestCount++;
-
-        // 异步更新
-        setTimeout(function() {
-            this.aSyncUpdateRequestCount++;
-
-            if(this.aSyncUpdateRequestCount === this.updateRequestCount) {
-                this.updateRequestCount = this.aSyncUpdateRequestCount = 0;
-                this.reRender();
-            }
-        }.bind(this), 0);
-    }
-
-    public reRender() {
-        this.ctx.clearRect(0, 0, this.canvasInfo.width, this.canvasInfo.height);
-
-        this.shapeHeapArray.map(item => {
-            this.ctx.save();
-            item.render(this.ctx);
-            this.ctx.restore();
-        });
-    }
 }
-
-
-
-// 图形元素集合
-export const shapes = {
-    Custom,
-    Circle,
-    Rectangle,
-    Triangle,
-    Group,
-    Composite,
-    Ellipse,
-    RoundRect,
-    SVGPath,
-    Text: TextBlock
-}
-
-// 实用函数集合
-export const utils = {
-    isInShape,
-    isInPath
-}
-
-
 
 
 

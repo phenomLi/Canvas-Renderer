@@ -30,19 +30,19 @@ export class Ellipse extends Shape {
     }
 
     // 新增setter（radiusX）
-    protected setRadiusX(rx: number) {
+    protected setterRadiusX(rx: number) {
         this._radiusX = rx;
         this.drawPath().transFormPath();
     }
 
     // 新增setter（radiusY）
-    protected setRadiusY(ry: number) {
+    protected setterRadiusY(ry: number) {
         this._radiusY = ry;
         this.drawPath().transFormPath();
     }
 
     // 重载setter（rotate）
-    protected setRotate(deg: number) {
+    protected setterRotate(deg: number) {
         this._rotate = deg;
         this.drawPath().transFormPath();
     }

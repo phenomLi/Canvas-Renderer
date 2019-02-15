@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>Document</title>
+<style>
+* {
+    padding: 0;
+    margin: 0;
+}
+
+#container {
+    width: 100%;
+    height: 500px;
+    background-color: #eee;
+}
+</style>
+</head>
+<body>
+    
+<div id="container"></div>
+<div>
+    <button id="btn1">点击1</button>
+    <button id="btn2">点击2</button>
+</div>
+
+<script src="./dist/bundle.js"></script>
+<script>
+
+const prender = P2.default;
+const container = document.getElementById("container");
+
+const p = new prender(container);
+
+var getRandomColor = function() {
+    return "rgb(" + Math.round(Math.random() * 255) + "," + Math.round(Math.random() * 255) + ',' + Math.round(Math.random() * 10) + ')';
+}
+
+
+
+
+
+let motionList = [];
+
+let g = 0.05,
+    f = -0.03;
+
+
+
+
+for(let i = 0; i < 500; i++) {
+    let circle = new p.shapes.Circle({
+        pin: [0, p.getHeight()],
+        radius: 5 + Math.random()*15,
+        color: getRandomColor()
+    });
+
+    p.append(circle);
+
+    let motion = new p.motion(circle),
+        r = circle.attr('radius'),
+        boundX = -0.3,
+        boundY = -0.7;
+
+    motion.rule(m => {
+  
+        if(m.posY() >= p.getHeight() - r) {
+            if(m.velX() > 0.02 || m.velX() < -0.02) {
+                m.velX(m.velX() + (m.velX() > 0? f: -f));
+                m.posX(m.posX() + m.velX());
+            }
+            else {
+                m.velX(0);
+            }
+
+            if(m.velY() < 0.2 && m.velY() > -0.2) {
+                m.velY(0);
+            }
+        }
+
+        if(m.posY() >= p.getHeight() - r) {
+            m.posY(p.getHeight() - r);
+            m.velY(m.velY()*boundY);
+        }
+
+        if(m.posY() <= r) {
+            m.posY(r);
+            m.velY(m.velY()*boundY);
+        }
+    
+        if(m.posX() >= p.getWidth() - r) {
+            m.posX(p.getWidth() - r);
+            m.velX(m.velX()*boundX);
+        }
+  
+        if(m.posX() <= r) {
+            m.posX(r);
+            m.velX(m.velX()*boundX);
+        }
+
+
+        if(m.velX() === 0 && m.velY() === 0) {
+            m.end();
+        }
+    });
+    
+
+    motionList.push(motion);
+};
+
+document.getElementById('btn1').onclick = function() {
+    motionList.map(item => {
+        item.start([4 + Math.random()*10, -4 + Math.random()*40], [0, g*item.shape.attr('radius')]);
+    });
+};
+
+</script>    
+</body>
+</html>

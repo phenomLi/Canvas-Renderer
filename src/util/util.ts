@@ -20,9 +20,21 @@ export function DFS(shapeList: Array<ShapeType>, fn: Function, flag: boolean = t
 
 
 
-// 计算图形几何中心(仅针对custom类)
+// 计算图形几何中心(仅针对polygon类)
 export function calcCenter(path: Array<Array<number>>): Array<number> {
-    return [];
+    let xMax: number = path[0][0], 
+        yMax: number = path[0][1], 
+        xMin: number = path[0][0], 
+        yMin: number = path[0][1];
+
+    path.map(pos => {
+        if(pos[0] < xMin) xMin = pos[0];
+        if(pos[0] > xMax) xMax = pos[0];
+        if(pos[1] < yMin) yMin = pos[1];
+        if(pos[1] > yMax) yMax = pos[1];
+    });
+
+    return [(xMax - xMin)/2, (yMax - yMin)/2];
 }
 
 

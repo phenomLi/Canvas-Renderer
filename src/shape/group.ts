@@ -10,6 +10,8 @@ type GroupContainType = ShapeType;
 
 class groupConfig {
     shapes: Array<GroupContainType>;
+    tag: number | string;
+    zIndex: number;
     mounted: Function;
     removed: Function;
 }
@@ -21,9 +23,6 @@ export class Group extends Base {
     constructor(config: groupConfig) {
         super(config, 'Group');
         
-        this._mounted = config !== undefined? config.mounted: () => {};
-        this._removed = config !== undefined? config.removed: () => {};
-
         this.count = 0;
         this.shapeList = [];
 
@@ -40,7 +39,9 @@ export class Group extends Base {
         return {
             shapes: this.shapeList,
             mounted: this._mounted,
-            removed: this._removed
+            removed: this._removed,
+            tag: this._tag,
+            zIndex: this._zIndex
         }
     }
 

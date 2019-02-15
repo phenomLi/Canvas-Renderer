@@ -5,7 +5,7 @@ import { Matrix } from '../render/core';
 import { TextBlock } from './Text';
 
 // Composite容器可以存放的图形
-type CompositeContainType = Shape | Composite | TextBlock;
+type CompositeContainType = Shape | Composite;
 
 
 class compositeConfig extends shapeConfig {
@@ -68,7 +68,7 @@ export class Composite extends Shape {
     }
 
     // 重载setter（x）
-    protected setX(x: number) {
+    protected setterX(x: number) {
         let d = x - this._x;
         this._x = x;
         this._center[0] = this._center[0] + d;
@@ -80,7 +80,7 @@ export class Composite extends Shape {
     }
 
     // 重载setter（y）
-    protected setY(y: number) {
+    protected setterY(y: number) {
         let d = y - this._y;
         this._y = y;
         this._center[1] = this._center[1] + d;
@@ -92,7 +92,7 @@ export class Composite extends Shape {
     }
 
     // 重载setter（show）
-    protected setShow(show: boolean) {
+    protected setterShow(show: boolean) {
         this._show = show;
         this.shapeList.map(item => {
             item.attr('show', show);
@@ -100,7 +100,7 @@ export class Composite extends Shape {
     }
 
     // 重载setter（rotate）
-    protected setRotate(deg: number) {
+    protected setterRotate(deg: number) {
         this._rotate = deg;
 
         // 每个图形先自己旋转
@@ -115,7 +115,7 @@ export class Composite extends Shape {
     }
 
     // 重载setter（transform）
-    protected setTransform(trans: Array<Array<number>>) {
+    protected setterTransform(trans: Array<Array<number>>) {
         // 每个图形先自己形变
         DFS(this.getShapeList(), item => {
             item.drawPath().rotatePath().transFormPath();

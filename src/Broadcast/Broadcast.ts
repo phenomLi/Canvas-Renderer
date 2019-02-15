@@ -7,8 +7,8 @@ export default {
         this.listenerTable[tag] = listener;;
     },
 
-    notify(tag: string, para?: any) {
-        return this.listenerTable[tag](para);
+    notify(tag: string, ...para) {
+        return this.listenerTable[tag].apply(null, para);
     }
 }
 
