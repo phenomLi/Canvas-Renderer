@@ -10,7 +10,7 @@ export default {
     notify(tag: string, ...para) {
         return this.listenerTable[tag].apply(null, para);
     }
-}
+};
 
 
 

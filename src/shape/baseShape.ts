@@ -1,6 +1,5 @@
 import { event, keyBoardEvent } from '../event/core';
-import { rotate, transform } from '../util/util';
-import { Matrix } from '../render/core';
+import { rotate, scale, rotateVex } from '../util/util';
 import Broadcast from './../Broadcast/Broadcast';
 import Animation from './../animation/core';
 import ShapePropertiesTable from './../render/shapePropertiesTable';
@@ -20,6 +19,11 @@ export class Base {
 
     protected count: number;
 
+    // 异步路径重绘请求计数器
+    protected aSyncRePathRequestCount: number;
+    // 路径重绘请求次数
+    protected rePathRequestCount: number;
+
     constructor(config: any, type: string) {
         this._id = Symbol();
         this._type = type;
@@ -33,6 +37,9 @@ export class Base {
 
         this.isMount = false;
         this.count = 1;
+
+        this.rePathRequestCount = 0;
+        this.aSyncRePathRequestCount = 0;
     }
     
     // 初始化属性设置函数
@@ -45,7 +52,7 @@ export class Base {
                     this[`_${attr}`] = val;
                     
                     if(!ShapePropertiesTable[this._type].notRePathProperties.includes(attr)) {
-                        this.drawPath().rotatePath().transFormPath();
+                        this.createPath(true);
                     }
                 }
             }
@@ -63,6 +70,7 @@ export class Base {
             if(ShapePropertiesTable[this._type].writableProperties.includes(attr)) {
                 this[`setter${attr.substring(0, 1).toUpperCase() + attr.substring(1)}`](val);
                 this.isMount && Broadcast.notify('update', this._zIndex);
+                
             }
             else console.warn(`${attr}不能被修改`);
 
@@ -96,7 +104,7 @@ export class Base {
     };
 
     // 需重载函数: 返回配置项
-    config() {
+    config(): any {
         throw "此方法必须由子类重写";
     };
 
@@ -119,22 +127,40 @@ export class Base {
 
     /**-------------------------PATH-------------------------- */
 
+    // 创建path2D路径
+    createPath(async: boolean = false) {
+        //异步路径重绘
+        if(async) {
+            this.rePathRequestCount++;
+
+            requestAnimationFrame(() => {
+                this.aSyncRePathRequestCount++;
+
+                if(this.aSyncRePathRequestCount === this.rePathRequestCount) {
+                    this.rePathRequestCount = this.aSyncRePathRequestCount = 0;
+                    this.drawPath().rotatePath().scalePath();
+                }
+            });
+        }
+        // 创建路径
+        else {
+            this.drawPath().rotatePath().scalePath();
+        }
+    }
+
     // 定义path2D路径(需重载)
     drawPath(): Base { 
         throw "此方法必须由子类重写";
-        return this; 
     }
 
     // 旋转path2D路径(需重载)
     rotatePath(): Base { 
         throw "此方法必须由子类重写";
-        return this; 
     }
 
-    // 形变path2D路径(需重载)
-    transFormPath(): Base { 
+    // 缩放path2D路径(需重载)
+    scalePath(): Base { 
         throw "此方法必须由子类重写";
-        return this; 
     }
 
     // 渲染图形到canvas(需重载)
@@ -151,19 +177,21 @@ export class shapeConfig {
     // 位置
     pin: Array<number>; //*
     // 标签
-    tag: string | number;
+    tag?: string | number;
     //层级
-    zIndex: number;
+    zIndex?: number;
     // 颜色
     color?: string;
     // 是否填充
     fill?: boolean;
     //透明度
     opacity?: number;
+    // 线条粗细
+    lineWidth?: number
     // 旋转
     rotate?: number;
-    // 形变
-    transform?: Array<Array<number>>;
+    // 缩放
+    scale?: number[];
 
     // event
     onClick?: (e: event) => {};
@@ -204,9 +232,11 @@ export class Shape extends Base {
     protected _color: string;
     protected _fill: boolean;
     protected _opacity: number;
+    protected _lineWidth: number;
     protected _rotate: number;
-    protected _lastRotate: number;
-    protected _transform: Array<Array<number>>;
+    protected lastRotate: number;
+    protected _scale: number[];
+    protected lastScale: number[];
     protected _fillRule: boolean;
 
     protected path: Path2D;
@@ -230,10 +260,12 @@ export class Shape extends Base {
         this._y = config.pin[1];
         this._color = config.color || '#000';
         this._fill = (config.fill === undefined)? true: config.fill;
+        this._lineWidth = config.lineWidth || 1;
         this._opacity = config.opacity || 1;
         this._rotate = config.rotate || 0;
-        this._lastRotate = this._rotate;
-        this._transform = config.transform || [];
+        this.lastRotate = 0;
+        this._scale = config.scale || [1, 1];
+        this.lastScale = [1, 1];
 
         this.mouseIn = false;
         this.eventList = [];
@@ -256,7 +288,7 @@ export class Shape extends Base {
             color: this._color,
             fill: this._fill,
             rotate: this._rotate,
-            transform: this._transform,
+            scale: this._scale,
             zIndex: this._zIndex,
             tag: this._tag,
             ...this.camelCaseEventName,
@@ -295,7 +327,7 @@ export class Shape extends Base {
         this._x = x;
         this._center[0] = this._center[0] + d;
 
-        this.drawPath().rotatePath().transFormPath();
+        this.createPath();
     }
 
     // 重载setter（y）
@@ -304,18 +336,40 @@ export class Shape extends Base {
         this._y = y;
         this._center[1] = this._center[1] + d;
 
-        this.drawPath().rotatePath().transFormPath();
+        this.createPath();
+    }
+
+    // 重载setter（rotate）
+    protected setterRotate(rotate: number) {
+        if(this.lastRotate !== rotate) {
+            this._rotate = rotate;
+            this.lastRotate = this._rotate;
+
+            this.createPath();
+        }
+    }
+
+    // 重载setter（scale）
+    protected setterScale(scale: number[]) {
+        if(this.lastScale.toString() !== scale.toString()) {
+            this._scale = scale;
+            this.lastScale = this._scale;
+
+            this.createPath();
+        }
     }
 
     // 重载setter（zIndex）
     protected setterZIndex(zIndex: number) {
         if(zIndex === this._zIndex) return;
 
+        // 在旧的layer移除该图层
         Broadcast.notify('remove', {
             shape: this,
             zIndex: this._zIndex
         });
 
+        // 在新的layer添加该图形
         Broadcast.notify('append', {
             shape: this,
             zIndex: zIndex
@@ -491,31 +545,18 @@ export class Shape extends Base {
 
     // 旋转path2D路径
     rotatePath(): Shape {
-        // circle, ring 和 ellipse 不使用该方法
-        if(
-            this._type === 'circle' || 
-            this._type === 'ellipse' ||
-            this._type === 'Ring'
-        ) return this;
-
-        if(this._lastRotate !== this._rotate) {
-            let tPath = new Path2D();
-            tPath.addPath(this.path, rotate(Matrix.rotateMatrix, this._center, this._rotate));
-            this.path = tPath;
-
-            this._lastRotate = this._rotate;
-        }
+        let tPath = new Path2D();
+        tPath.addPath(this.path, rotate(this._center, this._rotate));
+        this.path = tPath;
 
         return this;
     }
 
-    // 形变path2D路径
-    transFormPath(): Shape {
-        if(this._transform.length) {
-            let tPath = new Path2D();
-            tPath.addPath(this.path, transform(Matrix.transformMatrix, this._center, this._transform));
-            this.path = tPath;
-        }
+    // 缩放path2D路径
+    scalePath(): Shape {
+        let tPath = new Path2D();
+        tPath.addPath(this.path, scale(this._center, this._scale));
+        this.path = tPath;
 
         return this;
     }
@@ -531,6 +572,7 @@ export class Shape extends Base {
             ctx.fill(this.path);
         }
         else {
+            ctx.lineWidth = this._lineWidth;
             ctx.strokeStyle = this._color;
             ctx.stroke(this.path);
         }

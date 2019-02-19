@@ -43,11 +43,11 @@ export class EventSystem {
     //键盘数字对应表
     private keypressEventMap;
 
-    constructor(container: HTMLElement, layerMap: object) {
+    constructor(container: HTMLElement, layerMap: object, containerPosition: number[]) {
         this.container = container;
         this.layerMap = layerMap;
-        this.containerLeft = container.scrollLeft + container.clientLeft;
-        this.containerTop = container.scrollTop + container.clientTop;
+        this.containerLeft = containerPosition[0];
+        this.containerTop = containerPosition[1];
 
         this.clickEventList = [];
         this.mouseoverEventList = [];

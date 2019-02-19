@@ -1,9 +1,4 @@
-import Broadcast from './../Broadcast/Broadcast';
-import { DFS } from '../util/util';
-import { ShapeType, shapes } from './core';
-import { Shape } from '../shape/BaseShape';
-import { Group } from '../shape/Group';
-import { Composite } from '../shape/Composite';
+import { ShapeType } from './core';
 
 
 // 画布元素堆
@@ -14,7 +9,7 @@ export class shapeHeap {
     private ctx: CanvasRenderingContext2D;
     // 图形堆数组
     private shapeHeapArray: Array<ShapeType> = new Array();
-    // 异步更新请求次数
+    // 异步更新请求计数器
     private aSyncUpdateRequestCount: number;
     // 更新请求次数
     private updateRequestCount: number;
@@ -62,14 +57,14 @@ export class shapeHeap {
         this.updateRequestCount++;
 
         // 异步更新
-        requestAnimationFrame(function() {
+        requestAnimationFrame(() => {
             this.aSyncUpdateRequestCount++;
 
             if(this.aSyncUpdateRequestCount === this.updateRequestCount) {
                 this.updateRequestCount = this.aSyncUpdateRequestCount = 0;
                 this.reRender();
             }
-        }.bind(this));
+        });
     }
 
     public reRender() {

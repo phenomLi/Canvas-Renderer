@@ -18,10 +18,10 @@ const PropertiesManager = {
     },
 
     init() {
-        this.baseProp.writableProperties = ['x', 'y', 'color', 'fill', 'opacity', 'rotate', 'transform', 'show', 'zIndex'];
+        this.baseProp.writableProperties = ['x', 'y', 'color', 'fill', 'opacity', 'rotate', 'scale', 'show', 'zIndex', 'lineWidth'];
         this.baseProp.readonlyProperties = ['id', 'type', 'center', 'tag'];
-        this.baseProp.animateProperties = ['x', 'y', 'color', 'opacity', 'rotate'];
-        this.baseProp.notRePathProperties = ['color', 'fill', 'opacity', 'show'];
+        this.baseProp.animateProperties = ['x', 'y', 'color', 'opacity', 'rotate', 'lineWidth'];
+        this.baseProp.notRePathProperties = ['color', 'fill', 'opacity', 'show', 'lineWidth'];
         this.baseProp.requiredProperties = ['pin'];
         this.baseProp.readableProperties = [];
 
@@ -165,8 +165,8 @@ export default {
     })(),
     Polygon: (() => {
         PropertiesManager.init();
-        PropertiesManager['writableProperties']('add', 'path');
-        PropertiesManager['requiredProperties']('add', 'path');
+        PropertiesManager['writableProperties']('add', 'vex');
+        PropertiesManager['requiredProperties']('add', 'vex');
 
         return PropertiesManager.get();
     })(),
@@ -185,7 +185,6 @@ export default {
     })(),
     Text: (() => {
         PropertiesManager.init();
-        PropertiesManager['writableProperties']('remove', 'transform');
         PropertiesManager['writableProperties']('add', ['align', 'dir', 'content', 'fontSize']);
         PropertiesManager['animateProperties']('add', 'fontSize');
 

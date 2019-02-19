@@ -19,6 +19,7 @@ export class TextBlock extends Shape {
 
     private font: string;
     private compositeRotate: number;
+    private compositeScale: number[];
     private compositeCenter: number[];
 
     constructor(config: textConfig) {
@@ -34,6 +35,7 @@ export class TextBlock extends Shape {
         this._center = [];
         this.compositeCenter = [];
         this.compositeRotate = 0;
+        this.compositeScale = [1, 1];
 
         this.initSetter();
     }
@@ -55,10 +57,23 @@ export class TextBlock extends Shape {
         this.compositeRotate = deg;
     }
 
+    // 若 text 被加入 composite，则叠加缩放(获取 composite 的 center 和 scale)
+    setCompositeScale(center: number[], scale: number[]) {
+        this.compositeCenter = center;
+        this.compositeScale= scale;
+    }
+
     // 文本旋转
     textRotate(ctx: CanvasRenderingContext2D, center: number[], deg: number) {
         ctx.translate(center[0], center[1]);
         ctx.rotate(deg/180*Math.PI);
+        ctx.translate(-center[0], -center[1]);
+    }
+
+    // 文本缩放
+    textScale(ctx: CanvasRenderingContext2D, center: number[], scale: number[]) {
+        ctx.translate(center[0], center[1]);
+        ctx.scale(scale[0], scale[1]);
         ctx.translate(-center[0], -center[1]);
     }
 
@@ -70,13 +85,14 @@ export class TextBlock extends Shape {
     rotatePath(): TextBlock { return this; }
 
     // 形变path2D路径
-    transFormPath(): TextBlock { return this; }
+    scalePath(): TextBlock { return this; }
 
     render(ctx: CanvasRenderingContext2D) {
         if(!this._show) return; 
 
         this.compositeCenter.length && this.textRotate(ctx, this.compositeCenter, this.compositeRotate);
         this.textRotate(ctx, [this._x + ctx.measureText(this._content).width, this._y - this._fontSize/2], this._rotate);
+        this.textScale(ctx, [this._x + ctx.measureText(this._content).width, this._y - this._fontSize/2], this._scale);
 
         ctx.font = this._fontSize + this.font;
         ctx.direction = this._direction;

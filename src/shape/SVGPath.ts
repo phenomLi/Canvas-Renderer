@@ -14,6 +14,9 @@ export class SVGPath extends Shape {
 
     constructor(config: SVGPathConfig) {
         super(config, 'SVGPath');
+
+        this._svgPath = config.svgPath;
+        this.createPath();
     }
 
     config() {
@@ -23,7 +26,7 @@ export class SVGPath extends Shape {
         };
     }
 
-    renderPath() {
+    drawPath() {
         this.path = new Path2D(this._svgPath);
         return this;
     }

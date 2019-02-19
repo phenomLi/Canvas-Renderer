@@ -23,7 +23,7 @@ export class RoundRect extends Shape {
         this._center = [this._x + this._width/2, this._y + this._height/2 + this._round];
 
         this.initSetter();
-        this.drawPath().rotatePath().transFormPath();
+        this.createPath();
     }
 
     config() {

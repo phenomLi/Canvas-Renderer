@@ -20,7 +20,7 @@ export class Sector extends Shape {
         this._range = config.range;
 
         this.initSetter();
-        this.drawPath().rotatePath().transFormPath();
+        this.createPath();
     }
 
     config() {

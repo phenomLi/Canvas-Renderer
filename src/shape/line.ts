@@ -1,4 +1,4 @@
-import { Matrix } from './../render/core';
+import { TranslateMatrix, Matrix } from './../math/matrix';
 
 
 class Line {
@@ -19,8 +19,11 @@ class Line {
         this.endY = this.oY;
         this.tPath = new Path2D();
 
-        Matrix.translateMatrix.e = this.oX;
-        Matrix.translateMatrix.f = this.oY;
+        Matrix.set(
+            TranslateMatrix, 
+            [[1, 0, this.oX], 
+            [0, 1, this.oY]]
+        );
 
         this.tPath.moveTo(0, 0);
 
@@ -69,12 +72,9 @@ class Line {
         this.endY = y;
     }
 
-    end(closePath: boolean = true) {
-
-        closePath && this.tPath.closePath();
-
-        this.path.addPath(this.tPath, Matrix.translateMatrix);
-        Matrix.translateMatrix.e = Matrix.translateMatrix.f = 0;
+    end() {
+        this.path.addPath(this.tPath, TranslateMatrix);
+        Matrix.init(TranslateMatrix);
     } 
 }
 

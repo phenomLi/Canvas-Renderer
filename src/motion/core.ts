@@ -1,6 +1,5 @@
 import { vector } from './../math/vector';
 import { Shape } from './../shape/BaseShape';
-import MotionHeap from './motionHeap';
 import Broadcast from '../Broadcast/Broadcast';
 
 

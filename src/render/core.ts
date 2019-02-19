@@ -1,55 +1,16 @@
-import { DFS, isInShape, isInPath } from '../util/util';
-import { shapeHeap } from './shapeHeap';
+import { DFS } from '../util/util';
 import Layer from './layer';
 import Broadcast from './../Broadcast/Broadcast';
-
+import shapes from './shapes';
 import { Shape } from '../shape/BaseShape';
-import { Custom } from '../shape/Custom';
-import { Triangle } from '../shape/Triangle';
-import { Circle } from '../shape/Circle';
-import { Rectangle } from '../shape/Rectangle';
-import { Ellipse } from './../shape/Ellipse';
-import { RoundRect } from './../shape/RoundRect';
-import { Ring } from './../shape/Ring';
-import { Sector } from './../shape/Sector';
-import { Polygon } from './../shape/Polygon'; 
-import { SVGPath } from './../shape/SVGPath';
 import { Group } from '../shape/Group';
 import { Composite } from '../shape/Composite';
-import { TextBlock } from '../shape/Text';
-
  
 // 图形类
 export type ShapeType = Shape | Group | Composite;
-// 3个svg矩阵：旋转矩阵, 形变矩阵, 位移矩阵
-export const Matrix = {
-    rotateMatrix: document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix(),
-    transformMatrix: document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix(),
-    translateMatrix: document.createElementNS("http://www.w3.org/2000/svg", "svg").createSVGMatrix()
-};
 
-// 图形元素集合
-export const shapes = {
-    Custom,
-    Circle,
-    Rectangle,
-    Triangle,
-    Group,
-    Composite,
-    Ellipse,
-    RoundRect,
-    Sector,
-    Ring,
-    Polygon,
-    SVGPath,
-    Text: TextBlock
-}
 
-// 实用函数集合
-export const utils = {
-    isInShape,
-    isInPath
-}
+
 
 
 // 容器管理器：管理所有layer

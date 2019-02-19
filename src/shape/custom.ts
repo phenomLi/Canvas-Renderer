@@ -22,7 +22,7 @@ export class Custom extends Shape {
         this._draw = config.draw;
 
         this.initSetter();
-        this.drawPath().rotatePath().transFormPath();
+        this.createPath();
     }
 
     config() {

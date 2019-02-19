@@ -1,7 +1,6 @@
 import { Shape, shapeConfig } from './BaseShape';
 import Broadcast from './../Broadcast/Broadcast';
-import { rotate, DFS, transform } from '../util/util';
-import { Matrix } from '../render/core';
+import { rotate, DFS, scale } from '../util/util';
 import { TextBlock } from './Text';
 
 // Composite容器可以存放的图形
@@ -105,7 +104,7 @@ export class Composite extends Shape {
 
         // 每个图形先自己旋转
         DFS(this.getShapeList(), item => {
-            item.drawPath().rotatePath().transFormPath();
+            item.createPath();
         }, false);
 
         // 然后再叠加Composite容器的旋转
@@ -114,16 +113,16 @@ export class Composite extends Shape {
         });
     }
 
-    // 重载setter（transform）
-    protected setterTransform(trans: Array<Array<number>>) {
-        // 每个图形先自己形变
+    // 重载setter（scale）
+    protected setterScale(trans: Array<Array<number>>) {
+        // 每个图形先自己缩放
         DFS(this.getShapeList(), item => {
-            item.drawPath().rotatePath().transFormPath();
+            item.createPath();
         }, false);
 
-        // 然后再叠加Composite容器的形变
+        // 然后再叠加Composite容器的缩放
         this.shapeList.map(item => {
-            this.transFormPath(item);
+            this.scalePath(item);
         });
         return this;
     }
@@ -137,7 +136,7 @@ export class Composite extends Shape {
         // 对加入的每个图形进行旋转操作
         this._rotate && this.rotatePath(shape);
         // 对加入的每个图形进行形变操作
-        this._transform && this.transFormPath(shape);
+        this._scale && this.scalePath(shape);
 
         return shape;
     }
@@ -147,7 +146,7 @@ export class Composite extends Shape {
         if(shape.attr('type') === 'Composite') {
             DFS((<Composite>shape).getShapeList(), item => {
                 let tPath = new Path2D();
-                tPath.addPath(item.getPath(), rotate(Matrix.rotateMatrix, this._center, this._rotate));
+                tPath.addPath(item.getPath(), rotate(this._center, this._rotate));
                 item.setPath(tPath);
             }, false);
         }
@@ -156,28 +155,28 @@ export class Composite extends Shape {
         }
         else {
             let tPath = new Path2D();
-            tPath.addPath((<Shape>shape).getPath(), rotate(Matrix.rotateMatrix, this._center, this._rotate));
+            tPath.addPath((<Shape>shape).getPath(), rotate(this._center, this._rotate));
             (<Shape>shape).setPath(tPath);
         }
 
         return this;
     }
 
-    // 以Composite容器为中心对每个字图形进行形变
-    transFormPath(shape?: CompositeContainType): Composite {
+    // 以Composite容器为中心对每个字图形进行缩放
+    scalePath(shape?: CompositeContainType): Composite {
         if(shape.attr('type') === 'Composite') {
             DFS((<Composite>shape).getShapeList(), item => {
                 let tPath = new Path2D();
-                tPath.addPath(item.getPath(), transform(Matrix.transformMatrix, this._center, this._transform));
+                tPath.addPath(item.getPath(), scale(this._center, this._scale));
                 item.setPath(tPath);
             }, false);
         }
         else if(shape.attr('type') === 'Text') {
-            return this;
+            (<TextBlock>shape).setCompositeScale(this._center, this._scale);
         }
         else {
             let tPath = new Path2D();
-            tPath.addPath((<Shape>shape).getPath(), transform(Matrix.transformMatrix, this._center, this._transform));
+            tPath.addPath((<Shape>shape).getPath(), scale(this._center, this._scale));
             (<Shape>shape).setPath(tPath);
         }
 

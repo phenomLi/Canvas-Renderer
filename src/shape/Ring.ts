@@ -20,7 +20,7 @@ export class Ring extends Shape {
         this._width = config.width;
 
         this.initSetter();
-        this.drawPath().rotatePath().transFormPath();
+        this.createPath();
     }
 
     config() {
