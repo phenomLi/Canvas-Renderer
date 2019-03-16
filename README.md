@@ -4,31 +4,31 @@
 
 ### 大致结构图如下
 
-![](https://github.com/phenomLi/Canvas-Render-Library/raw/结构图/幻灯片1.png)
+![](https://github.com/phenomLi/Canvas-Render-Library/raw/结构图/幻灯片1.PNG)
 
 <br/>
 
-![](https://github.com/phenomLi/Canvas-Render-Library/raw/结构图/幻灯片2.png)
+![](https://github.com/phenomLi/Canvas-Render-Library/raw/结构图/幻灯片2.PNG)
 
 <br/>
 
-![](https://github.com/phenomLi/Canvas-Render-Library/raw/结构图/幻灯片3.png)
+![](https://github.com/phenomLi/Canvas-Render-Library/raw/结构图/幻灯片3.PNG)
 
 <br/>
 
-![](https://github.com/phenomLi/Canvas-Render-Library/raw/结构图/幻灯片4.png)
+![](https://github.com/phenomLi/Canvas-Render-Library/raw/结构图/幻灯片4.PNG)
 
 <br/>
 
-![](https://github.com/phenomLi/Canvas-Render-Library/raw/结构图/幻灯片5.png)
+![](https://github.com/phenomLi/Canvas-Render-Library/raw/结构图/幻灯片5.PNG)
 
 <br/>
 
-![](https://github.com/phenomLi/Canvas-Render-Library/raw/结构图/幻灯片6.png)
+![](https://github.com/phenomLi/Canvas-Render-Library/raw/结构图/幻灯片6.PNG)
 
 <br/>
 
-![](https://github.com/phenomLi/Canvas-Render-Library/raw/结构图/幻灯片7.png)
+![](https://github.com/phenomLi/Canvas-Render-Library/raw/结构图/幻灯片7.PNG)
 
 
 <br/>
