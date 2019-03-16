@@ -13,7 +13,7 @@
 
 <br/>
 
-![](https://github.com/phenomLi/Canvas-Render-Library/raw/structure/幻灯片3.PNG)
+![](https://github.com/phenomLi/Canvas-Render-Library/raw/structure/3.PNG)
 
 <br/>
 
