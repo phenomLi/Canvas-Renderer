@@ -1,3 +1,4 @@
+import { scale } from "../util/util";
 
 // [x, y]
 export type vector = Array<number>;
@@ -11,7 +12,7 @@ export const Vector = {
     },
 
     // 向量减法
-    Sub(v1: vector, v2: vector): vector {
+    sub(v1: vector, v2: vector): vector {
         return [v1[0] - v2[0], v1[1] - v2[1]];
     },
 
@@ -27,7 +28,7 @@ export const Vector = {
 
     // 投影
     pro(v1: vector, v2: vector): number {
-        return this.mul(v1, v2)/this.len(v2);
+        return this.dot(v1, v2)/this.len(v2);
     },
 
     // 计算法向量
@@ -43,6 +44,11 @@ export const Vector = {
     // 向量单位化
     nol(v: vector): vector {
         let len = this.len(v);
-        return [v[0]/len, v[1]/len];
+        return len !== 0? [v[0]/len, v[1]/len]: [0, 0];
+    },
+
+    // 乘上一个标量
+    scl(scale: number, v: vector): vector {
+        return [scale*v[0], scale*v[1]];
     }
 };

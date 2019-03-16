@@ -1,5 +1,5 @@
 import { Shape, shapeConfig } from './BaseShape';
-import Broadcast from './../Broadcast/Broadcast';
+import Broadcast from '../Broadcast/Broadcast';
 import { rotate, DFS, scale } from '../util/util';
 import { TextBlock } from './Text';
 
@@ -100,11 +100,13 @@ export class Composite extends Shape {
 
     // 重载setter（rotate）
     protected setterRotate(deg: number) {
+        if (deg >= 360) deg %= 360;
+
         this._rotate = deg;
 
         // 每个图形先自己旋转
         DFS(this.getShapeList(), item => {
-            item.createPath();
+            item.transformPath();
         }, false);
 
         // 然后再叠加Composite容器的旋转
@@ -114,10 +116,10 @@ export class Composite extends Shape {
     }
 
     // 重载setter（scale）
-    protected setterScale(trans: Array<Array<number>>) {
+    protected setterScale(scale: number[]) {
         // 每个图形先自己缩放
         DFS(this.getShapeList(), item => {
-            item.createPath();
+            item.transformPath();;
         }, false);
 
         // 然后再叠加Composite容器的缩放
@@ -137,6 +139,10 @@ export class Composite extends Shape {
         this._rotate && this.rotatePath(shape);
         // 对加入的每个图形进行形变操作
         this._scale && this.scalePath(shape);
+
+        
+        
+        
 
         return shape;
     }
@@ -184,6 +190,8 @@ export class Composite extends Shape {
     }
 
     render(ctx: CanvasRenderingContext2D) {
+        if(!this._show) return;
+
         DFS(this.shapeList, item => {
             ctx.save();
             item.render(ctx);

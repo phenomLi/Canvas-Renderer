@@ -1,5 +1,5 @@
-import Broadcast from './../Broadcast/Broadcast';
-import { ShapeType } from '../render/core';
+import Broadcast from '../Broadcast/Broadcast';
+import { ShapeType } from '../render/LayerManager';
 import { DFS } from '../util/util';
 import { Base } from './BaseShape';
 
@@ -10,6 +10,7 @@ type GroupContainType = ShapeType;
 
 class groupConfig {
     shapes: Array<GroupContainType>;
+    show: boolean;
     tag: number | string;
     zIndex: number;
     mounted: Function;
@@ -41,6 +42,7 @@ export class Group extends Base {
             mounted: this._mounted,
             removed: this._removed,
             tag: this._tag,
+            show: this._show,
             zIndex: this._zIndex
         }
     }
@@ -68,6 +70,8 @@ export class Group extends Base {
             shape.map(item => this.append(item));
         }
         else {
+            shape.attr('show', this._show);
+
             this.shapeList.push(shape);
         
             this.count += (<Group>shape).getCount();
@@ -92,6 +96,8 @@ export class Group extends Base {
     }
 
     render(ctx: CanvasRenderingContext2D) {
+        if(!this._show) return;
+
         DFS(this.shapeList, item => {
             ctx.save();
             item.render(ctx);

@@ -1,7 +1,7 @@
 
 
 module.exports = {
-    entry: './src/init.ts',
+    entry: './src/P2.ts',
     output: {
 		filename: './bundle.js',
 		library: 'P2',

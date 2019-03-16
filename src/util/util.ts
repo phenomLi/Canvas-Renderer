@@ -1,9 +1,8 @@
 import { Group } from '../shape/Group';
-import { ShapeType } from '../render/core';
-import { Composite } from '../shape/Composite';
+import { ShapeType } from '../render/LayerManager';
+import { Composite } from '../shape/composite';
 import { Shape } from '../shape/BaseShape';
 import { Matrix, RotateMatrix, TranslateMatrix, ResultMatrix, ScaleMatrix } from '../math/matrix';
-import { polygonVex } from '../shape/Polygon';
 import { Vector } from '../math/vector';
 
 
@@ -24,24 +23,41 @@ export function DFS(shapeList: Array<ShapeType>, fn: Function, flag: boolean = t
 
 
 // 闭合多边形顶点，使其构成闭合图形 
-export function closePolyVex(vex: polygonVex) {
-    if(vex[0].toString() !== vex[vex.length - 1].toString()) {
+export function closePolyVex(vex: Array<number[]>) {
+    if(vex[vex.length - 1] && vex[0].toString() !== vex[vex.length - 1].toString()) {
         vex.push(vex[0]);
     }
 }
 
+// 计算多边形范围
+export function calcPolyRange(vex: Array<number[]>, x: number, y: number): Array<number[]> {
+    let xMax: number = vex[0][0], 
+        yMax: number = vex[0][1], 
+        xMin: number = vex[0][0], 
+        yMin: number = vex[0][1];
+
+    vex.map(pos => {
+        if(pos[0] < xMin) xMin = pos[0];
+        if(pos[0] > xMax) xMax = pos[0];
+        if(pos[1] < yMin) yMin = pos[1];
+        if(pos[1] > yMax) yMax = pos[1];
+    });
+
+    return [[x + xMin, x + xMax], [y + yMin, y + yMax]];
+}
+
+
+// 进行位移操作
+export function translate(pos: number[]): DOMMatrix {
+    Matrix.set(TranslateMatrix, [[1, 0, pos[0]], [0, 1, pos[1]]]);
+    return TranslateMatrix;
+}
 
 
 // 进行旋转操作
 export function rotate(center: Array<number>, deg: number): DOMMatrix {
     let d = deg/180*Math.PI;
 
-    // matrix.a = Math.cos(d); matrix.c = -1*Math.sin(d);
-    // matrix.b = Math.sin(d); matrix.d = Math.cos(d);
-    // matrix.e = -center[0]*Math.cos(d) + center[1]*Math.sin(d) + center[0];
-    // matrix.f = -center[0]*Math.sin(d) - center[1]*Math.cos(d) + center[1];   
-
-    // return matrix;
     Matrix.init(ResultMatrix);
 
     Matrix.set(TranslateMatrix, [[1, 0, center[0]], [0, 1, center[1]]]);
@@ -73,7 +89,7 @@ export function scale(center: Array<number>, scaleArray: number[]): DOMMatrix {
 }
 
 // 旋转多边形的顶点
-export function rotateVex(vex: polygonVex, center:number[], deg: number): polygonVex {
+export function rotateVex(vex: Array<number[]>, center:number[], deg: number): Array<number[]> {
     let d = deg/180*Math.PI;
 
     return vex.map(v => [
@@ -127,7 +143,7 @@ export function isInPath(ctx: CanvasRenderingContext2D, shape: Shape | Composite
 
 
 // 判断是否为凹多边形
-export function isConcavePoly(vex: polygonVex): boolean {
+export function isConcavePoly(vex: Array<number[]>): boolean {
     let flag: boolean = false,
         prev: number, cur: number;
 
@@ -151,14 +167,14 @@ export function isConcavePoly(vex: polygonVex): boolean {
 
 
 // 将凹多边形分割为多个凸多边形(旋转分割法)
-export function divideConcavePoly(vex: polygonVex): Array<polygonVex> {
+export function divideConcavePoly(vex: Array<number[]>): Array<Array<number[]>> {
     // 将拆分出来的多边形保存到这个数组
-    let polygonList: Array<polygonVex> = [];
+    let polygonList: Array<Array<number[]>> = [];
 
     let i, j, len = vex.length,
         flag = false;
 
-    let polygon1 = <polygonVex>arrayDeepCopy(vex), polygon2 = [];
+    let polygon1 = <Array<number[]>>arrayDeepCopy(vex), polygon2 = [];
 
     for(i = 0, len = vex.length; i < len - 2; i++) {
         let vAxis = [vex[i + 1][0] - vex[i][0], vex[i + 1][1]- vex[i][1]], 
@@ -208,6 +224,23 @@ export function isOverlaps(line1: number[], line2: number[]): boolean {
     return (line1[1] > line2[0] && line1[0] < line2[1]) || (line2[1] > line1[0] && line2[0] < line1[1]);
 }
 
+
+// 若两条共线线段重叠了，返回重叠长度
+export function getOverlapsLength(line1: number[], line2: number[]): number {
+    if(line1[1] > line2[0] && line1[0] < line2[1]) {
+        return line1[1] - line2[0];
+    }
+
+    if(line2[1] > line1[0] && line2[0] < line1[1]) {
+        return line2[1] - line1[0];
+    }
+}
+
+
+// 获取随机颜色
+export function getRandomColor() {
+    return "rgb(" + Math.round(Math.random() * 255) + "," + Math.round(Math.random() * 255) + ',' + Math.round(Math.random() * 10) + ')';
+}
 
 
 

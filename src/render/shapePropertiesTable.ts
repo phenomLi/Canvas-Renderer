@@ -104,6 +104,18 @@ const PropertiesManager = {
 
 
 export default {
+    Line: (() => {
+        let baseProp = {};
+
+        baseProp['writableProperties'] = ['color', 'opacity', 'show', 'zIndex', 'lineWidth', 'range'];
+        baseProp['readonlyProperties'] = ['id', 'type', 'tag'];
+        baseProp['animateProperties'] = [];
+        baseProp['notRePathProperties'] = ['color', 'opacity', 'show', 'lineWidth'];
+        baseProp['requiredProperties'] = ['range'];
+        baseProp['readableProperties'] = ['color', 'opacity', 'show', 'zIndex', 'lineWidth', 'id', 'type', 'tag', 'range'];
+
+        return baseProp;
+    })(),
     Circle: (() => {
         PropertiesManager.init();
 
@@ -172,8 +184,6 @@ export default {
     })(),
     Custom: (() => {
         PropertiesManager.init();
-        PropertiesManager['requiredProperties']('add', 'center');
-
         return PropertiesManager.get();
     })(),
     SVGPath: (() => {

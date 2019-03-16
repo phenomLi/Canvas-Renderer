@@ -1,4 +1,4 @@
-import { ShapeType } from './core';
+import { ShapeType } from './LayerManager';
 
 
 // 画布元素堆

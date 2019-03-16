@@ -33,7 +33,9 @@ export class Sector extends Shape {
 
     drawPath(): Shape {
         this.path = new Path2D();
-        this.path.arc(this._x, this._y, this._radius, this._range[0]/180*Math.PI, this._range[1]/180*Math.PI, true);
+        this.path.moveTo(this._x, this._y);
+        this.path.arc(this._x, this._y, this._radius, this._range[0]/180*Math.PI, this._range[1]/180*Math.PI);
+        this.path.closePath();
         return this;
     }
 } 

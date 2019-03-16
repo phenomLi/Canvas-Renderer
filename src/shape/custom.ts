@@ -1,12 +1,9 @@
 import { Shape, shapeConfig } from './BaseShape';
-import { line } from './Line';
+import { drawTool } from './DrawTool';
 
 class customConfig extends shapeConfig {
-    center: Array<number>; //*
-    fillRule?: boolean;
-
     // 在config中重写draw函数，实现用户定制图形
-    draw(ctx: CanvasRenderingContext2D) {};
+    draw(drawTool) {};
 }
 
 
@@ -17,8 +14,6 @@ export class Custom extends Shape {
     constructor(config: customConfig) {
         super(config, 'Custom');
 
-        this._center = config.center;
-        this._fillRule = config.fillRule || true;
         this._draw = config.draw;
 
         this.initSetter();
@@ -34,7 +29,7 @@ export class Custom extends Shape {
 
     drawPath(): Shape {
         this.path = new Path2D();
-        this._draw(this.path, line.init(this.path, [this._x, this._y]));
+        this._draw(drawTool.init(this.path, [this._x, this._y]));
         return this;
     }
 }

@@ -1,5 +1,5 @@
 import { shapeHeap } from './shapeHeap';
-import { ShapeType } from './core';
+import { ShapeType } from './LayerManager';
 
 
 

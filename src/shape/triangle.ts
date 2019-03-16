@@ -1,10 +1,9 @@
 import { Shape, shapeConfig } from './BaseShape';
-import { line } from './Line';
-import BoundRect from './boundRect/boundRect';
-import { Polygon, polygonType } from './Polygon';
+import { drawTool } from './DrawTool';
+import { Polygon } from './Polygon';
 
 
-class triangleConfig extends shapeConfig {
+export class triangleConfig extends shapeConfig {
     edge: number; //*
 }
 
@@ -17,26 +16,12 @@ export class Triangle extends Polygon {
     private height: number;
 
     constructor(config: triangleConfig) {
-        super({
-            ...config,
-            vex: []
-        }, 'Triangle');
-
-        // 正三角形是凸多边形
-        this.polygonType = polygonType.convex;
+        super(config, 'Triangle');
 
         this._edge = config.edge;
         this.midEdge = this._edge/2;
         this.height = Math.sqrt(this._edge*this._edge - this.midEdge*this.midEdge);
         this._center = [this._x, this._y + this.height/2];
-
-        this._absVex = [
-            [this._x, this._y],
-            [this._x - this.midEdge, this._y + this.height], 
-            [this._x + this.midEdge, this._y + this.height], 
-            [this._x, this._y],
-        ];
-        this.boundRect = new BoundRect(this._absVex);
 
         this.initSetter();
         this.createPath();
@@ -48,15 +33,10 @@ export class Triangle extends Polygon {
             edge: this._edge
         };
     }
-    
-    // 获取包围盒
-    getBoundRect(): BoundRect {
-        return this.boundRect;
-    }
 
     drawPath(): Shape {
         this.path = new Path2D();
-        line
+        drawTool
         .init(this.path, [this._x, this._y])
         .bee([[-this.midEdge, this.height], [this.midEdge, this.height], [0, 0]])
         .end();

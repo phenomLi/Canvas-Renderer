@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>Document</title>
+<style>
+* {
+    padding: 0;
+    margin: 0;
+}
+
+#container {
+    width: 100%;
+    height: 500px;
+    background-color: #eee;
+}
+</style>
+</head>
+<body>
+    
+
+<div id="container"></div>
+
+
+
+
+<script src="./dist/bundle.js"></script>
+<script>
+
+
+function getRandomColor() {
+    return "rgb(" + Math.round(Math.random() * 255) + "," + Math.round(Math.random() * 255) + ',' + Math.round(Math.random() * 10) + ')';
+}
+
+
+const World = new P2.World(document.getElementById("container"), {
+    gravity: [0, 4],
+    drag: {
+        k1: 0.4,
+        k2: 0
+    }
+});
+
+
+let b1 = new World.body.Boundary({
+        position: 'left',
+        bound: -0.6
+    }),
+    b2 = new World.body.Boundary({
+        position: 'right',
+        bound: -0.6
+    });
+    b3 = new World.body.Boundary({
+        position: 'bottom',
+        bound: -0.6
+    }),
+    b4 = new World.body.Boundary({
+        position: 'top',
+        bound: -0.6
+    });
+
+
+World.append(b1);
+World.append(b2);
+World.append(b3);
+World.append(b4);
+
+for(let i = 0; i < 30; i++) {
+    let cir = new World.body.Circle({
+        shape: {
+            pin: [270 + Math.floor(Math.random()*80), 330 + Math.floor(Math.random()*30)],
+            radius: 15,
+            color: 'blue'
+        },
+        nature: {
+            //linearVelocity: [5, 0],
+            mass: 100
+        }
+    });
+
+    //World.append(cir);
+}
+
+let poly1 = new World.body.Polygon({
+    shape: {
+            pin: [200, 300],
+            vex: [[0, 0], [100, 100], [200, 0], [200, 200], [0, 200], [0, 0]],
+            color: getRandomColor()
+    },
+    nature: {
+        static: 'total'
+    }
+});
+
+let poly2 = new World.body.Polygon({
+    shape: {
+            pin: [400, 300],
+            vex: [[0, 0], [100, 0], [200, 100], [200, 200], [0, 200], [0, 0]],
+            color: getRandomColor()
+    },
+    nature: {
+        static: 'total'
+    }
+});
+
+let rect = new World.body.Rect({
+    shape: {
+        pin: [600, 150],
+        edge: [100, 50],
+        color: getRandomColor()
+    }
+});
+
+//World.append(poly1);
+//World.append(poly2);
+World.append(rect);
+
+rect.getShape().attr('rotate', 45);
+//rect.getShape().attr('rotate', 90);
+
+World.bind('click', ev => {
+    rect.force.applyForce([100, -200], [-25, 0]);
+});
+
+</script>
+</body>
+</html>
+
+
+
+
+
+

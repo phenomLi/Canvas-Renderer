@@ -1,10 +1,9 @@
 import { Shape, shapeConfig } from './BaseShape';
-import { line } from './Line';
-import BoundRect from './boundRect/boundRect';
-import { Polygon, polygonType } from './Polygon';
+import { drawTool } from './DrawTool';
+import { Polygon } from './Polygon';
 
 
-class rectangleConfig extends shapeConfig {
+export class rectangleConfig extends shapeConfig {
     edge: Array<number>; //*
 }
 
@@ -15,28 +14,12 @@ export class Rectangle extends Polygon {
     private _height: number;
 
     constructor(config: rectangleConfig) {
-        super({
-            ...config,
-            vex: []
-        }, 'Rectangle');
-
-        // 矩形是凸多边形
-        this.polygonType = polygonType.convex;
+        super(config, 'Rectangle');
 
         this._width = config.edge[0];
         this._height = config.edge[1];
         this._center = [this._x + this._width/2, this._y + this._height/2];
-        // 设置矩形的顶点
-        this._absVex = [
-            [this._x, this._y],
-            [this._x + this._width, this._y],
-            [this._x + this._width, this._y + this._height],
-            [this._x, this._y + this._height],
-            [this._x, this._y]
-        ];
-
-        this.boundRect = new BoundRect(this._absVex);
-
+        
         this.initSetter();
         this.createPath();
     }
@@ -50,7 +33,7 @@ export class Rectangle extends Polygon {
 
     drawPath(): Shape {
         this.path = new Path2D();
-        line
+        drawTool
         .init(this.path, [this._x, this._y])
         .bee([[this._width, 0], [this._width, this._height], [0, this._height], [0, 0]])
         .end();

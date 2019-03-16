@@ -1,5 +1,5 @@
 import { Shape, shapeConfig } from './BaseShape';
-import { line } from './Line';
+import { drawTool } from './DrawTool';
 
 
 class roundRectConfig extends shapeConfig {
@@ -36,7 +36,7 @@ export class RoundRect extends Shape {
 
     drawPath(): Shape {
         this.path = new Path2D();
-        line
+        drawTool
         .init(this.path, [this._x, this._y + this._round])
         .bee([[0, this._height - this._round]])
         .arc(this._round, 180, 90)

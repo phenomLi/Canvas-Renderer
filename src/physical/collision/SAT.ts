@@ -1,53 +1,127 @@
-import { polygonVex, Polygon, polygonType } from "../../shape/Polygon";
-import { circleInfo, Circle } from "../../shape/Circle";
+import { polygonVex, polygonType } from "../body/PolygonBody";
+import { circleInfo, CirBody } from "../body/CircleBody";
 import { vector, Vector } from "../../math/vector";
-import { isOverlaps } from "../../util/util";
+import { isOverlaps, getOverlapsLength } from "../../util/util";
+import { PolygonBody } from "../body/PolygonBody";
+import { Body } from '../body/body';
+
 
 
 type collisionData = polygonVex | circleInfo;
-type collisionShape = Polygon | Circle;
 
 
 /**
- * SAT检测
+ * 细检测阶段，使用SAT算法
  * 3种情况：
- * 1：obj1为多边形，obj2为多边形
- * 2：obj1为多边形，obj2为圆形
- * 3：obj1为圆形，obj2为多边形
+ * 1：body1为多边形，body2为多边形
+ *  - body1为凹多边形，body2为凹多边形
+ *  - body1为凹多边形，body2为凸多边形
+ *  - body1为凸多边形，body2为凹多边形
+ *  - body1和body2都为凸多边形
+ * 2：obj1为多边形，body2为圆形
+ * 3：body1为圆形，body2为多边形
  */
-export default function SATDetection(shape1: collisionShape, shape2: collisionShape): boolean {
-    // shape1和shape2都是多边形
-    if(shape1 instanceof Polygon && shape2 instanceof Polygon) {
-        // shape1，shape2都为为凹多边形
-        if(shape1.getPolyType() === polygonType.concave && shape2.getPolyType() === polygonType.concave) {
-            let polyList1, polyList2;
+export default function SATDetection(body1: Body, body2: Body): number {
+    // body1和body2都是多边形
+    if(body1 instanceof PolygonBody && body2 instanceof PolygonBody) {
+        // body1，body2都为为凹多边形
+        if(body1.getPolyType() === polygonType.concave && body2.getPolyType() === polygonType.concave) {
+            let polies1, polies2;
 
-            polyList1 = shape1.getConvexPolyList();
-            polyList2 = shape2.getConvexPolyList();
+            polies1 = body1.getConvexPolyList();
+            polies2 = body2.getConvexPolyList();
 
-            return !polyList1.every(poly1 => polyList2.every(poly2 => !SAT(poly1, poly2)));
+            for(let i = 0, len = polies1.length; i < len; i++) {
+
+                for(let j = 0, len = polies2.length; j < len; j++) {
+                    let pen = SAT(polies1[i], polies2[j]);
+
+                    if(pen >= 0) {
+                        return pen;
+                    }
+                }
+            }
+
+            return -1;
         }
-        // shape1为凹多边形，shape2为凸多边形
-        else if(shape1.getPolyType() === polygonType.concave && shape2.getPolyType() === polygonType.convex) {
-            let vex = shape2.getPolygonInfo();
-            return !shape1.getConvexPolyList().every(poly => !SAT(poly, vex));
+        // body1为凹多边形，body2为凸多边形
+        else if(body1.getPolyType() === polygonType.concave && body2.getPolyType() === polygonType.convex) {
+            let vex = body2.getInfo(),
+                polies = body1.getConvexPolyList();
+
+            for(let i = 0, len = polies.length; i < len; i ++) {
+                let pen = SAT(polies[i], vex);
+
+                if(pen >= 0) {
+                    return pen;
+                }
+            }
+
+            return -1;
         }
-        // shape1为凸多边形，shape2为凹多边形
-        else if(shape1.getPolyType() === polygonType.convex && shape2.getPolyType() === polygonType.concave) {
-            let vex = shape1.getPolygonInfo();
-            return !shape2.getConvexPolyList().every(poly => !SAT(poly, vex));
+        // body1为凸多边形，body2为凹多边形
+        else if(body1.getPolyType() === polygonType.convex && body2.getPolyType() === polygonType.concave) {
+            let vex = body1.getInfo(),
+                polies = body2.getConvexPolyList();
+
+            for(let i = 0, len = polies.length; i < len; i ++) {
+                let pen = SAT(polies[i], vex);
+
+                if(pen >= 0) {
+                    return pen;
+                }
+            }
+
+            return null;
         }
         // 两个都为凸多边形
         else {
-            return SAT(shape1.getPolygonInfo(), shape2.getPolygonInfo());
+            return SAT(body1.getInfo(), body2.getInfo());
         }
-
     }
-    // 一个是多边形一个是圆形
+    // body1是多边形body2是圆形
+    else if(body1 instanceof PolygonBody && body2 instanceof CirBody) {
+        if(body1.getPolyType() === polygonType.concave) {
+            let polies = body1.getConvexPolyList(),
+                rad = body2.getInfo();
+
+            for(let i = 0, len = polies.length; i < len; i ++) {
+                let pen = SAT(polies[i], rad);
+
+                if(pen >= 0) {
+                    return pen;
+                }
+            }
+
+            return -1;
+        }
+        else {
+            return SAT(body1.getInfo(), body2.getInfo());
+        }
+    }
+    // body1是圆形body2是多边形
+    else if(body1 instanceof CirBody && body2 instanceof PolygonBody) {
+        if(body2.getPolyType() === polygonType.concave) {
+            let polies = body2.getConvexPolyList(),
+                rad = body1.getInfo();
+
+            for(let i = 0, len = polies.length; i < len; i ++) {
+                let pen = SAT(polies[i], rad);
+
+                if(pen >= 0) {
+                    return pen;
+                }
+            }
+
+            return -1;
+        }
+        else {
+            return SAT(body1.getInfo(), body2.getInfo());
+        }
+    }
+    // 两个都是圆形
     else {
-        return shape1 instanceof Polygon? 
-            SAT(shape1.getPolygonInfo(), (<Circle>shape2).getCircleInfo()):
-            SAT(shape1.getCircleInfo(), (<Polygon>shape2).getPolygonInfo());
+        return circleContact(<CirBody>body1, <CirBody>body2);
     }
 }   
 
@@ -55,8 +129,28 @@ export default function SATDetection(shape1: collisionShape, shape2: collisionSh
 
 
 // SAT分离轴
-function SAT(obj1: collisionData, obj2: collisionData): boolean {
-    return !getAxes(obj1, obj2).every(v => !isOverlaps(project(obj1, v), project(obj2, v)));
+function SAT(obj1: collisionData, obj2: collisionData): number {
+    let axes = getAxes(obj1, obj2),
+        minOverlaps = 10000,
+        overlaps = 0;
+
+    for(let i = 0; i < axes.length; i++) {
+        let pro1 = project(obj1, axes[i]),
+            pro2 = project(obj2, axes[i]);
+
+        if(isOverlaps(pro1, pro2)) {
+            overlaps = getOverlapsLength(pro1, pro2);
+
+            if(overlaps < minOverlaps) {
+                minOverlaps = overlaps;
+            }
+        }
+        else {
+            return -1;
+        }
+    }
+
+    return minOverlaps;
 }
 
 // 获取两个图形的所有分离轴
@@ -84,7 +178,7 @@ function getPolyAxes(poly: polygonVex): Array<vector> {
 
 // 获取圆形的分离轴
 function getCirAxes(cir: circleInfo, poly: polygonVex): Array<vector> {
-    let minLen: number, index;
+    let minLen: number, index = 0;
 
     // 假设距离最短为第一个顶点
     minLen = Vector.len([poly[0][0] - cir.x, poly[0][1] - cir.y]);
@@ -126,4 +220,16 @@ function project(obj: collisionData, sAxis: vector): number[] {
     }
 
     return range;
+}
+
+
+// 检测圆形间的碰撞
+function circleContact(cir1: CirBody, cir2: CirBody): number {
+    let center1 = [cir1.getInfo().x, cir1.getInfo().y],
+        center2 = [cir2.getInfo().x, cir2.getInfo().y];
+
+    let centerDistance = Math.sqrt(Math.pow(center1[0] - center2[0], 2) + Math.pow(center1[1] - center2[1], 2)),
+        sumRadius = cir1.getInfo().radius + cir2.getInfo().radius;
+
+    return sumRadius - centerDistance;
 }

@@ -1,8 +1,9 @@
 import { event, keyBoardEvent } from '../event/core';
-import { rotate, scale, rotateVex } from '../util/util';
-import Broadcast from './../Broadcast/Broadcast';
-import Animation from './../animation/core';
-import ShapePropertiesTable from './../render/shapePropertiesTable';
+import { rotate, scale, rotateVex, translate } from '../util/util';
+import Broadcast from '../Broadcast/Broadcast';
+import Animation from '../animation/core';
+import ShapePropertiesTable from '../render/shapePropertiesTable';
+import Animator from '../animation/animator';
 
 
 
@@ -19,15 +20,10 @@ export class Base {
 
     protected count: number;
 
-    // 异步路径重绘请求计数器
-    protected aSyncRePathRequestCount: number;
-    // 路径重绘请求次数
-    protected rePathRequestCount: number;
-
     constructor(config: any, type: string) {
         this._id = Symbol();
         this._type = type;
-        this._show = true;
+        this._show = (config && config.show !== undefined)? config.show: true;
 
         this._tag = (config && config.tag)? config.tag: '';
         this._zIndex = (config && config.zIndex)? config.zIndex: 0;
@@ -37,9 +33,6 @@ export class Base {
 
         this.isMount = false;
         this.count = 1;
-
-        this.rePathRequestCount = 0;
-        this.aSyncRePathRequestCount = 0;
     }
     
     // 初始化属性设置函数
@@ -123,54 +116,17 @@ export class Base {
             this._removed();
         }
     }
-
-
-    /**-------------------------PATH-------------------------- */
-
-    // 创建path2D路径
-    createPath(async: boolean = false) {
-        //异步路径重绘
-        if(async) {
-            this.rePathRequestCount++;
-
-            requestAnimationFrame(() => {
-                this.aSyncRePathRequestCount++;
-
-                if(this.aSyncRePathRequestCount === this.rePathRequestCount) {
-                    this.rePathRequestCount = this.aSyncRePathRequestCount = 0;
-                    this.drawPath().rotatePath().scalePath();
-                }
-            });
-        }
-        // 创建路径
-        else {
-            this.drawPath().rotatePath().scalePath();
-        }
-    }
-
-    // 定义path2D路径(需重载)
-    drawPath(): Base { 
-        throw "此方法必须由子类重写";
-    }
-
-    // 旋转path2D路径(需重载)
-    rotatePath(): Base { 
-        throw "此方法必须由子类重写";
-    }
-
-    // 缩放path2D路径(需重载)
-    scalePath(): Base { 
-        throw "此方法必须由子类重写";
-    }
-
-    // 渲染图形到canvas(需重载)
-    render(ctx: CanvasRenderingContext2D) {
-        throw "此方法必须由子类重写";
-    }
 }
 
 
-/**------------------------------------SHAPE---------------------------------- */
+
+
+
+
+/*********************************************************************************************/
+/*********************************************SHAPE****************************************** */
+/******************************************************************************************** */
+
 
 
 export class shapeConfig {
@@ -178,7 +134,7 @@ export class shapeConfig {
     pin: Array<number>; //*
     // 标签
     tag?: string | number;
-    //层级
+    // 层级
     zIndex?: number;
     // 颜色
     color?: string;
@@ -234,10 +190,13 @@ export class Shape extends Base {
     protected _opacity: number;
     protected _lineWidth: number;
     protected _rotate: number;
-    protected lastRotate: number;
     protected _scale: number[];
+
+    // last性能优化：对比下一次更改的值和上一次是否一样，不一样再调用更改
+    protected lastX: number;
+    protected lastY: number;
+    protected lastRotate: number;
     protected lastScale: number[];
-    protected _fillRule: boolean;
 
     protected path: Path2D;
     protected camelCaseEventName: object;
@@ -245,6 +204,11 @@ export class Shape extends Base {
 
     // 鼠标是否在当前图形里面
     protected mouseIn: boolean;
+
+    // 异步路径重绘请求计数器
+    protected aSyncRePathRequestCount: number;
+    // 路径重绘请求次数
+    protected rePathRequestCount: number;
 
     constructor(config: shapeConfig, type: string) {
         super(config, type);
@@ -256,20 +220,28 @@ export class Shape extends Base {
             }
         });
 
-        this._x = config.pin[0];
-        this._y = config.pin[1];
+        this._x = config.pin? config.pin[0]: 0;
+        this._y = config.pin? config.pin[1]: 0;
         this._color = config.color || '#000';
         this._fill = (config.fill === undefined)? true: config.fill;
         this._lineWidth = config.lineWidth || 1;
         this._opacity = config.opacity || 1;
         this._rotate = config.rotate || 0;
-        this.lastRotate = 0;
         this._scale = config.scale || [1, 1];
+
+        if (this._rotate >= 360) this._rotate %= 360;
+
+        this.lastX = this._x;
+        this.lastY = this._y;
+        this.lastRotate = 0;
         this.lastScale = [1, 1];
 
         this.mouseIn = false;
         this.eventList = [];
         this.camelCaseEventName = {};
+
+        this.rePathRequestCount = 0;
+        this.aSyncRePathRequestCount = 0;
 
         // 保存config中声明的事件
         for(let prop in config) {
@@ -327,7 +299,7 @@ export class Shape extends Base {
         this._x = x;
         this._center[0] = this._center[0] + d;
 
-        this.createPath();
+        this.transformPath();
     }
 
     // 重载setter（y）
@@ -336,27 +308,21 @@ export class Shape extends Base {
         this._y = y;
         this._center[1] = this._center[1] + d;
 
-        this.createPath();
+        this.transformPath();
     }
 
     // 重载setter（rotate）
-    protected setterRotate(rotate: number) {
-        if(this.lastRotate !== rotate) {
-            this._rotate = rotate;
-            this.lastRotate = this._rotate;
+    protected setterRotate(deg: number) {
+        if (deg >= 360) deg %= 360;
 
-            this.createPath();
-        }
+        this._rotate = deg;
+        this.transformPath();
     }
 
     // 重载setter（scale）
     protected setterScale(scale: number[]) {
-        if(this.lastScale.toString() !== scale.toString()) {
-            this._scale = scale;
-            this.lastScale = this._scale;
-
-            this.createPath();
-        }
+        this._scale = scale;
+        this.transformPath();
     }
 
     // 重载setter（zIndex）
@@ -499,7 +465,7 @@ export class Shape extends Base {
             }
         }
 
-        let animation = (new Animation({
+        let animation = (new Animator({
             value: values,
             duration: config.duration,
             delay: config.delay,
@@ -540,23 +506,78 @@ export class Shape extends Base {
     /** -------------------PATH2D路径---------------------------- */
 
 
+    // 创建path2D路径
+    createPath(async: boolean = false) {
+        this.drawPath().transformPath(async);
+    }
+
+    // 形变path2D路径（位移，旋转，缩放）
+    transformPath(async: boolean = false) {
+        //异步路径形变
+        // if(async) {
+        //     this.rePathRequestCount++;
+
+        //     requestAnimationFrame(() => {
+        //         this.aSyncRePathRequestCount++;
+
+        //         if(this.aSyncRePathRequestCount === this.rePathRequestCount) {
+        //             this.rePathRequestCount = this.aSyncRePathRequestCount = 0;
+        //             this.translatePath().rotatePath().scalePath();
+        //         }
+        //     });
+        // }
+        // // 形变路径
+        // else {
+            this.translatePath().rotatePath().scalePath();
+        //}
+    }
+
+
     // 定义path2D路径(需重载)
     drawPath(): Shape { return this; }
 
+
+    // 位移path2D路径
+    translatePath(): Shape {
+        if(this.lastX === this._x && this.lastY === this._y) return this;
+        
+        let tPath = new Path2D();
+        tPath.addPath(this.path, translate([this._x - this.lastX, this._y - this.lastY]));
+        this.path = tPath;
+
+        this.lastX = this._x;
+        this.lastY = this._y;
+
+        return this;
+    }
+
     // 旋转path2D路径
     rotatePath(): Shape {
+        if(this._rotate === this.lastRotate) return this;
+
         let tPath = new Path2D();
-        tPath.addPath(this.path, rotate(this._center, this._rotate));
+
+        console.log(this.lastRotate);
+
+        tPath.addPath(this.path, rotate(this._center, this._rotate - this.lastRotate));
         this.path = tPath;
+
+        this.lastRotate = this._rotate;
 
         return this;
     }
 
     // 缩放path2D路径
     scalePath(): Shape {
-        let tPath = new Path2D();
-        tPath.addPath(this.path, scale(this._center, this._scale));
+        if(this._scale.toString() === this.lastScale.toString()) return this;
+
+        let tPath = new Path2D(),
+            dScale = [this._scale[0]/this.lastScale[0], this._scale[1]/this.lastScale[1]];
+            
+        tPath.addPath(this.path, scale(this._center, dScale));
         this.path = tPath;
+
+        this.lastScale = this._scale;
 
         return this;
     }
