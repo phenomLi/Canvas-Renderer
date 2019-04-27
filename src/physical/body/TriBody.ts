@@ -12,7 +12,11 @@ export class TriBody extends PolygonBody {
 
     constructor(opt: BodyConfig) {
         super(opt, 'Triangle');
+    }
 
+
+    // 初始化刚体数据
+    initBodyData() {
         this.baseVex = this.shape.attr('vex');
 
         // 正三角形是凸多边形
@@ -33,30 +37,10 @@ export class TriBody extends PolygonBody {
             this.vex = rotateVex(this.vex, this.pos, this.rot);
         }
 
-        this.area = this.calcArea();
-        //this.density = this.calcDensity();
-        this.mass = this.mass || this.area*this.density;
-        this.centroid = this.calcCentroid();
-        this.rotationInertia = this.calcRotationInertia();
-
-        // 若此刚体是固定刚体，则质量趋于无穷大，则质量的倒数无穷小 --> 0
-        if(this.static === staticType.position || this.static === staticType.total) {
-            this.inverseMass = 0;
-        }
-        else {
-            this.inverseMass = 1/this.mass;
-        }
-
         this.boundRect = this.createBoundRect();
     }
 
-
-    // 初始化刚体数据
-    initBodyData() {
-        
-    }
-
-
+    
     // 计算面积
     calcArea(): number {
         return 0.5*this.edge*this.height;
@@ -69,7 +53,7 @@ export class TriBody extends PolygonBody {
 
     // 计算质心
     calcCentroid(): vector {
-        return this.pos;
+        return [this.pos[0], this.pos[1]];
     }
 
     // 计算转动惯量

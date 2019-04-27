@@ -31,19 +31,23 @@ export class PolygonBody extends Body {
     constructor(opt: BodyConfig, type?: string) {
         super(opt, type? type: 'Polygon');
 
-        if(type && type !== 'Polygon') return;
+        this.initBodyData();
+        this.setMassData();
+    }
 
+    initBodyData() {
         let x = this.shape.attr('x'), y = this.shape.attr('y');
+        
         this.baseVex = this.shape.attr('vex');
 
         this.vex = this.baseVex.map(v => [x + v[0], y + v[1]]);
 
+        // 闭合顶点
+        closePolyVex(this.vex);
+
         if(this.rot != 0) {
             this.vex = rotateVex(this.vex, this.pos, this.rot);
         }
-
-        // 闭合顶点
-        closePolyVex(this.vex);
 
         // 判断多边形类型
         this.polygonType = isConcavePoly(this.vex)? polygonType.concave: polygonType.convex;
@@ -54,20 +58,6 @@ export class PolygonBody extends Body {
         }
         else {
             this.convexPolyList = [];
-        }
-
-        this.area = this.calcArea();
-        //this.density = this.calcDensity();
-        this.mass = this.mass || this.area*this.density;
-        this.centroid = this.calcCentroid();
-        this.rotationInertia = this.calcRotationInertia();
-
-        // 若此刚体是固定刚体，则质量趋于无穷大，则质量的倒数无穷小 --> 0
-        if(this.static === staticType.position || this.static === staticType.total) {
-            this.inverseMass = 0;
-        }
-        else {
-            this.inverseMass = 1/this.mass;
         }
 
         this.boundRect = this.createBoundRect();

@@ -11,7 +11,9 @@ export class RectBody extends PolygonBody {
 
     constructor(opt: BodyConfig) {
         super(opt, 'Rectangle');
+    }
 
+    initBodyData() {
         // 矩形是凸多边形
         this.polygonType = polygonType.convex;
 
@@ -27,30 +29,9 @@ export class RectBody extends PolygonBody {
             this.vex = rotateVex(this.vex, this.pos, this.rot);
         }
 
-        this.area = this.calcArea();
-        
-        // 如果质量被用户定义了，那就重新计算密度
-        if(this.mass !== 0) {
-            this.density = this.calcDensity();
-        }
-        // 否则根据面积计算面积，密度使用默认密度（0.01）
-        else {
-            this.mass = this.area*this.density;
-        }
-
-        this.centroid = this.calcCentroid();
-        this.rotationInertia = this.calcRotationInertia();
-
-        // 若此刚体是固定刚体，则质量趋于无穷大，则质量的倒数无穷小 --> 0
-        if(this.static === staticType.position || this.static === staticType.total) {
-            this.inverseMass = 0;
-        }
-        else {
-            this.inverseMass = 1/this.mass;
-        }
-
         this.boundRect = this.createBoundRect();
     }
+
 
     // 计算面积
     calcArea(): number {

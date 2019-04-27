@@ -17,25 +17,16 @@ export class CirBody extends Body {
     constructor(opt: BodyConfig) {
         super(opt, 'Circle');
 
+        this.initBodyData();
+        this.setMassData();
+    }
+
+    initBodyData() {
         this.cirInfo = {
             x: this.pos[0],
             y: this.pos[1],
             radius: this.shape.attr('radius')
         };
-
-        this.area = this.calcArea();
-        //this.density = this.calcDensity();
-        this.mass = this.mass || this.area*this.density;
-        this.centroid = this.calcCentroid();
-        this.rotationInertia = this.calcRotationInertia();
-
-        // 若此刚体是固定刚体，则质量趋于无穷大，则质量的倒数无穷小 --> 0
-        if(this.static === staticType.position || this.static === staticType.total) {
-            this.inverseMass = 0;
-        }
-        else {
-            this.inverseMass = 1/this.mass;
-        }
 
         this.boundRect = this.createBoundRect();
     }
