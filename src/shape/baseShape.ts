@@ -514,22 +514,22 @@ export class Shape extends Base {
     // 形变path2D路径（位移，旋转，缩放）
     transformPath(async: boolean = false) {
         //异步路径形变
-        // if(async) {
-        //     this.rePathRequestCount++;
+        if(async) {
+            this.rePathRequestCount++;
 
-        //     requestAnimationFrame(() => {
-        //         this.aSyncRePathRequestCount++;
+            requestAnimationFrame(() => {
+                this.aSyncRePathRequestCount++;
 
-        //         if(this.aSyncRePathRequestCount === this.rePathRequestCount) {
-        //             this.rePathRequestCount = this.aSyncRePathRequestCount = 0;
-        //             this.translatePath().rotatePath().scalePath();
-        //         }
-        //     });
-        // }
-        // // 形变路径
-        // else {
+                if(this.aSyncRePathRequestCount === this.rePathRequestCount) {
+                    this.rePathRequestCount = this.aSyncRePathRequestCount = 0;
+                    this.translatePath().rotatePath().scalePath();
+                }
+            });
+        }
+        // 形变路径
+        else {
             this.translatePath().rotatePath().scalePath();
-        //}
+        }
     }
 
 
@@ -556,8 +556,6 @@ export class Shape extends Base {
         if(this._rotate === this.lastRotate) return this;
 
         let tPath = new Path2D();
-
-        console.log(this.lastRotate);
 
         tPath.addPath(this.path, rotate(this._center, this._rotate - this.lastRotate));
         this.path = tPath;

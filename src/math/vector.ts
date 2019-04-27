@@ -1,7 +1,8 @@
-import { scale } from "../util/util";
+import { scale, isConcavePoly } from "../util/util";
 
 // [x, y]
 export type vector = Array<number>;
+
 
 
 // 向量工具包
@@ -50,5 +51,15 @@ export const Vector = {
     // 乘上一个标量
     scl(scale: number, v: vector): vector {
         return [scale*v[0], scale*v[1]];
+    },
+
+    //向量反向
+    inv(v: vector): vector {
+        return [-v[0], -v[1]];
+    },
+
+    // 判断两向量是否相等
+    eql(v1: vector, v2: vector): boolean {
+        return v1[0] === v2[0] && v1[1] === v2[1];
     }
 };

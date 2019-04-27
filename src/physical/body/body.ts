@@ -1,6 +1,5 @@
 import { Shape, shapeConfig } from "../../shape/BaseShape";
 import BoundRect from "../collision/boundRect";
-import shapes from "../../render/shapes";
 import { polygonConfig } from "../../shape/Polygon";
 import { triangleConfig } from "../../shape/Triangle";
 import { rectangleConfig } from "../../shape/Rectangle";
@@ -78,9 +77,9 @@ export class Body {
     public state: number;
     // 是否碰撞
     public isCollide: boolean;
-        
+    
     // 受力管理器
-    protected force: ForceManager;
+    public force: ForceManager;
 
     //---------------------------物理量-------------------
 
@@ -96,6 +95,8 @@ export class Body {
     public pos: vector;
     // 方向
     public rot: number;
+    // // 几何中心
+    // public center: vector;
     // 质量
     public mass: number;
     // 质量的倒数
@@ -118,6 +119,12 @@ export class Body {
     // 固定
     public static: string; 
 
+    // 上一帧线速度
+    public lastFrameLVel: vector;
+    // 上一帧角速度
+    public lastFrameAvel: number;
+
+    public lastPos: vector;
     //----------------------------------------------------
 
     protected collidedFn: Function;
@@ -130,13 +137,13 @@ export class Body {
         this.shape = Broadcast.notify('createShape', type, opt.shape);
         this.id = this.shape.attr('id');
 
-        this.init(opt);
+        this.initPhysicalData(opt);
 
         this.force = new ForceManager(this);
     }
 
-    // 初始化数据
-    init(opt: BodyConfig) {
+    // 初始化物理量
+    initPhysicalData(opt: BodyConfig) {
         this.pos = this.shape.attr('center');
         this.rot = this.shape.attr('rotate');
 
@@ -144,37 +151,40 @@ export class Body {
         this.linearVel = [0, 0];
         this.angularVel = 0;
         this.angularAcc = 0;
-        this.mass = 10;
-        this.inverseMass = 1/this.mass;
+        this.mass = 0;
+        this.inverseMass = -1;
         this.friction = 0;
-        this.restitution = 1;
+        this.restitution = 0.7;
         this.area = 0;
-        this.density = 0;
+        this.density = 0.01;
         this.centroid = [0, 0];
         this.rotationInertia = 0;
         this.torque = 0;
         this.static = 'none';
         this.state = state.init;
         this.isCollide = false;
+        this.lastFrameLVel = this.linearVel;
+        this.lastFrameAvel = this.angularVel;
+        this.lastPos = this.pos;
         
         if(opt.nature) {
             this.linearVel = opt.nature.linearVelocity || this.linearVel;
             this.angularVel = opt.nature.angularVelocity || this.angularVel;
-            this.mass = opt.nature.mass || this.mass;
             this.static = opt.nature.static || 'none';
             this.friction = opt.nature.friction || this.friction;
             this.restitution = opt.nature.restitution || this.restitution;
-        }
-
-        // 若此刚体是固定刚体，则质量趋于无穷大，则质量的倒数无穷小 --> 0
-        if(this.static === staticType.position || this.static === staticType.total) {
-            this.inverseMass = 0;
+            this.mass = opt.nature.mass || this.mass;
         }
 
         this.collidedFn = opt.collided || (() => {});
         this.separatedFn = opt.separated || (() => {});
     }
     
+    // 初始化刚体数据
+    initBodyData() {
+        throw '此方法必须由子类重写';
+    }
+
     // 计算面积
     calcArea(): number {
         throw '此方法必须由子类重写';
@@ -195,7 +205,6 @@ export class Body {
         throw '此方法必须由子类重写';
     }
 
-
     //---------------------------------------------------------------//
 
     // 获取图形
@@ -213,6 +222,10 @@ export class Body {
         return this.id;
     }
 
+    // 事件绑定
+    bind(event: string, fn) {
+        this.shape.bind(event, fn);
+    }
 
     /**----------------------------包围盒------------------------------ */
     
@@ -232,7 +245,6 @@ export class Body {
     }
 
     /**----------------------根据速度加速度积分更新位置 ------------------*/
-
  
     // 位移积分
     integratePosition() {
@@ -250,15 +262,14 @@ export class Body {
 
     update() {
         // 添加应用重力和阻力(都过中心点)
-        this.force.applyForce(globalForce.gravity.generateForce(), [0, 0]);
-        this.force.applyForce(globalForce.drag.generateForce(this), [0, 0]);
+        this.force.applyForce(globalForce.gravity.generateForce(this), [0, 0]);
+        this.force.applyForce(globalForce.linearDrag.generateForce(this), [0, 0]);
+        this.angularVel = globalForce.angularDrag.generateForce(this);
 
         let accForce = this.force.getAccForce();
 
         this.linearAcc = accForce.linearAcc;
         this.angularAcc = accForce.angularAcc;
-
-        //console.log(this.angularAcc);
 
         this.integratePosition();
         this.integrateRotation();

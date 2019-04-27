@@ -22,107 +22,179 @@
     
 
 <div id="container"></div>
+<button id="btn">开始/暂停</button>
 
-
-
+<button id="rect">添加矩形</button>
+<button id="cir">添加圆形</button>
+<button id="tir">添加三角形</button>
+<button id="concave">添加凹多边形</button>
+<button id="convex">添加凸多边形</button>
 
 <script src="./dist/bundle.js"></script>
 <script>
 
+let flag = true;
 
 function getRandomColor() {
     return "rgb(" + Math.round(Math.random() * 255) + "," + Math.round(Math.random() * 255) + ',' + Math.round(Math.random() * 10) + ')';
 }
 
 
-const World = new P2.World(document.getElementById("container"), {
-    gravity: [0, 4],
-    drag: {
-        k1: 0.4,
-        k2: 0
-    }
-});
-
-
-let b1 = new World.body.Boundary({
-        position: 'left',
-        bound: -0.6
-    }),
-    b2 = new World.body.Boundary({
-        position: 'right',
-        bound: -0.6
-    });
-    b3 = new World.body.Boundary({
-        position: 'bottom',
-        bound: -0.6
-    }),
-    b4 = new World.body.Boundary({
-        position: 'top',
-        bound: -0.6
-    });
-
-
-World.append(b1);
-World.append(b2);
-World.append(b3);
-World.append(b4);
-
-for(let i = 0; i < 30; i++) {
-    let cir = new World.body.Circle({
-        shape: {
-            pin: [270 + Math.floor(Math.random()*80), 330 + Math.floor(Math.random()*30)],
-            radius: 15,
-            color: 'blue'
-        },
-        nature: {
-            //linearVelocity: [5, 0],
-            mass: 100
-        }
-    });
-
-    //World.append(cir);
+function getRandomPos(width, height) {
+    return [Math.floor(Math.random()*width), Math.floor(Math.random()*height)];
 }
 
-let poly1 = new World.body.Polygon({
-    shape: {
-            pin: [200, 300],
-            vex: [[0, 0], [100, 100], [200, 0], [200, 200], [0, 200], [0, 0]],
-            color: getRandomColor()
-    },
-    nature: {
-        static: 'total'
-    }
+const World = new P2.World(document.getElementById("container"), {
+    gravity: [0, 9],
+    linearDrag: [0.25, 0],
+    angularDrag: 0.05
+}),
+    renderer = World.Renderer;
+
+
+document.getElementById('btn').addEventListener('click', e => {
+    flag? World.pause(): World.start();
+    flag = !flag;
 });
 
-let poly2 = new World.body.Polygon({
-    shape: {
-            pin: [400, 300],
-            vex: [[0, 0], [100, 0], [200, 100], [200, 200], [0, 200], [0, 0]],
-            color: getRandomColor()
-    },
-    nature: {
-        static: 'total'
-    }
-});
+let b1 = new World.body.BoundaryTop({}),
+    b2 = new World.body.BoundaryRight({});
+    b3 = new World.body.BoundaryBottom({}),
+    b4 = new World.body.BoundaryLeft({});
 
-let rect = new World.body.Rect({
+
+World.append([b1, b2, b3, b4]);
+
+
+
+let tri = new World.body.Tri({
     shape: {
-        pin: [600, 150],
-        edge: [100, 50],
+        pin: [200, 200],
+        edge: 100,
         color: getRandomColor()
     }
 });
 
-//World.append(poly1);
-//World.append(poly2);
-World.append(rect);
 
-rect.getShape().attr('rotate', 45);
-//rect.getShape().attr('rotate', 90);
+let rect = new World.body.Rect({
+    shape: {
+        pin: [260, 187],
+        edge: [200, 200],
+        color: getRandomColor()
+    }
+});
+
+World.append([rect, tri]);
+
+
+
+
+
+
+
+
+
+
 
 World.bind('click', ev => {
-    rect.force.applyForce([100, -200], [-25, 0]);
+    let cir = new World.body.Circle({
+        shape: {
+            pin: [ev.x, ev.y],
+            radius: 16,
+            color: getRandomColor()
+        }
+    });
+
+    World.append(cir);
+
+    let r = new World.body.Rect({
+        shape: {
+            pin: [ev.x, ev.y],
+            edge: [50, 50],
+            color: getRandomColor()
+        }
+    });
+
+    World.append(r);
 });
+
+
+
+
+
+document.getElementById('rect').addEventListener('click', function() {
+    let r = new World.body.Rect({
+        shape: {
+            pin: getRandomPos(World.getWidth(), World.getHeight()),
+            edge: [Math.floor(Math.random()*50) + 50, Math.floor(Math.random()*50) + 50],
+            color: getRandomColor(),
+            fill: false
+        }
+    });
+
+    World.append(r);
+});
+
+document.getElementById('cir').addEventListener('click', function() {
+    let c = new World.body.Circle({
+        shape: {
+            pin: getRandomPos(World.getWidth(), World.getHeight()),
+            radius: Math.floor(Math.random()*50) + 10,
+            color: getRandomColor(),
+            fill: false
+        }
+    });
+
+    World.append(c);
+});
+
+document.getElementById('tir').addEventListener('click', function() {
+    let t = new World.body.Tri({
+        shape: {
+            pin: getRandomPos(World.getWidth(), World.getHeight()),
+            edge: Math.floor(Math.random()*50) + 50,
+            color: getRandomColor(),
+            fill: false
+        }
+    });
+
+    World.append(t);
+});
+
+
+document.getElementById('concave').addEventListener('click', function() {
+    let ca = new World.body.Polygon({
+        shape: {
+            pin: getRandomPos(World.getWidth(), World.getHeight()),
+            vex: [[0, 0], [50, 50], [100, 0], [100, 100], [0, 100], [0, 0]],
+            color: getRandomColor()
+        }
+    });
+
+    World.append(ca);
+});
+
+document.getElementById('convex').addEventListener('click', function() {
+    let cv = new World.body.Polygon({
+        shape: {
+            pin: getRandomPos(World.getWidth(), World.getHeight()),
+            vex: [[0, 0], [50, -50], [100, 0], [100, 50], [0, 50], [0, 0]],
+            color: getRandomColor()
+        }
+    });
+
+    World.append(cv);
+});
+
+
+
+
+World.start();
+
+
+
+
+
 
 </script>
 </body>

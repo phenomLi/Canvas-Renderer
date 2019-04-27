@@ -1,4 +1,4 @@
-import { Body, BodyConfig } from "./body";
+import { Body, BodyConfig, staticType } from "./body";
 import BoundRect from "../collision/boundRect";
 import { vector } from "../../math/vector";
 
@@ -24,9 +24,18 @@ export class CirBody extends Body {
         };
 
         this.area = this.calcArea();
-        this.density = this.calcDensity();
+        //this.density = this.calcDensity();
+        this.mass = this.mass || this.area*this.density;
         this.centroid = this.calcCentroid();
         this.rotationInertia = this.calcRotationInertia();
+
+        // 若此刚体是固定刚体，则质量趋于无穷大，则质量的倒数无穷小 --> 0
+        if(this.static === staticType.position || this.static === staticType.total) {
+            this.inverseMass = 0;
+        }
+        else {
+            this.inverseMass = 1/this.mass;
+        }
 
         this.boundRect = this.createBoundRect();
     }
@@ -43,7 +52,7 @@ export class CirBody extends Body {
 
     // 计算质心
     calcCentroid(): vector {
-        return this.pos;
+        return [this.pos[0], this.pos[1]];
     }
 
     // 计算转动惯量

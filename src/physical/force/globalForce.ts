@@ -13,16 +13,16 @@ export class Gravity extends ForceGenerator {
         super(g);
     }
 
-    generateForce(): vector {
-        return this.force;
+    generateForce(body: Body): vector {
+        return Vector.scl(body.mass*0.06, this.force);
     }
 }
 
 /**
- * 阻力发生器
+ * 线速度阻力发生器
  * k1, k2分别为阻力系数
  *  */
-export class Drag extends ForceGenerator {
+export class LinearDrag extends ForceGenerator {
     private k1: number;
     private k2: number;
 
@@ -37,7 +37,23 @@ export class Drag extends ForceGenerator {
         let len = Vector.len(body.linearVel),
             drag = this.k1*len + this.k2*len*len;
 
-        return Vector.scl(-1*drag, Vector.nol(body.linearVel));
+        return Vector.scl(-drag, Vector.nol(body.linearVel));
+    }
+}
+
+
+
+export class AngularDrag extends ForceGenerator {
+    private k: number;
+
+    constructor(k: number) {
+        super();
+
+        this.k = k;
+    }
+
+    generateForce(body: Body): number {
+        return body.angularVel *= (1 - this.k);
     }
 }
 
@@ -46,8 +62,10 @@ export class Drag extends ForceGenerator {
 export const globalForce = {
     // 重力
     gravity: null,
-    // 阻尼
-    drag: null
+    // 线速度阻尼
+    linearDrag: null,
+    // 角速度阻尼
+    angularDrag: null
 } 
 
 

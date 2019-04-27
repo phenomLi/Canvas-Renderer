@@ -155,7 +155,8 @@ export default {
         PropertiesManager.init();
         PropertiesManager['writableProperties']('add', ['width', 'height']);
         PropertiesManager['animateProperties']('add', ['width', 'height']);
-        PropertiesManager['requiredProperties']('add', ['edge']);
+        PropertiesManager['requiredProperties']('add', 'edge');
+        PropertiesManager['readonlyProperties']('add', 'vex');
 
         return PropertiesManager.get();
     })(),
@@ -172,6 +173,7 @@ export default {
         PropertiesManager['writableProperties']('add', 'edge');
         PropertiesManager['animateProperties']('add', 'edge');
         PropertiesManager['requiredProperties']('add', 'edge');
+        PropertiesManager['readonlyProperties']('add', 'vex');
 
         return PropertiesManager.get();
     })(),

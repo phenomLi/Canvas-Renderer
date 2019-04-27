@@ -10,7 +10,7 @@ export class polygonConfig extends shapeConfig {
 
 //绘制多边形
 export class Polygon extends Shape {
-    private _vex: Array<number[]>; 
+    protected _vex: Array<number[]>; 
 
     constructor(config: polygonConfig, type?: string) {
         super(config, type? type: 'Polygon');

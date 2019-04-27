@@ -1,5 +1,4 @@
 import { Shape } from '../shape/BaseShape';
-import { Composite } from '../shape/composite';
 import { isInShape } from '../util/util';
 import Broadcast from '../Broadcast/Broadcast';
 

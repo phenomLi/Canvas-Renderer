@@ -1,6 +1,6 @@
 import BoundRect from "../collision/boundRect";
-import { Body, BodyConfig } from "./body";
-import { isConcavePoly, divideConcavePoly, closePolyVex, rotateVex, calcPolyRange } from "../../util/util";
+import { Body, BodyConfig, staticType } from "./body";
+import { isConcavePoly, divideConcavePoly, closePolyVex, rotateVex, calcPolyRange, isPointInPoly } from "../../util/util";
 import Broadcast from "../../Broadcast/Broadcast";
 import { vector, Vector } from "../../math/vector";
 
@@ -33,9 +33,14 @@ export class PolygonBody extends Body {
 
         if(type && type !== 'Polygon') return;
 
+        let x = this.shape.attr('x'), y = this.shape.attr('y');
         this.baseVex = this.shape.attr('vex');
 
-        this.vex = this.baseVex.map(v => [this.shape.attr('x') + v[0], this.shape.attr('y') + v[1]]);
+        this.vex = this.baseVex.map(v => [x + v[0], y + v[1]]);
+
+        if(this.rot != 0) {
+            this.vex = rotateVex(this.vex, this.pos, this.rot);
+        }
 
         // 闭合顶点
         closePolyVex(this.vex);
@@ -52,9 +57,18 @@ export class PolygonBody extends Body {
         }
 
         this.area = this.calcArea();
-        this.density = this.calcDensity();
+        //this.density = this.calcDensity();
+        this.mass = this.mass || this.area*this.density;
         this.centroid = this.calcCentroid();
         this.rotationInertia = this.calcRotationInertia();
+
+        // 若此刚体是固定刚体，则质量趋于无穷大，则质量的倒数无穷小 --> 0
+        if(this.static === staticType.position || this.static === staticType.total) {
+            this.inverseMass = 0;
+        }
+        else {
+            this.inverseMass = 1/this.mass;
+        }
 
         this.boundRect = this.createBoundRect();
     }
@@ -96,26 +110,27 @@ export class PolygonBody extends Body {
         let centroid = [0, 0],
             // 辅助点，取值不影响计算
             pRef = [0, 0],
-            len = this.vex.length - 1;
+            len = this.vex.length,
+            totalArea = 0;
 
-		for (let i = 0; i < len; ++i) {
+		for (let i = 0; i < len - 1; ++i) {
 			let p1 = pRef,
 			    p2 = this.vex[i],
-			    p3 = i + 1 < len ? this.vex[i + 1]: this.vex[0];
+                p3 = this.vex[i + 1];
 
 			let e1 = Vector.sub(p2, p1),
 			    e2 = Vector.sub(p3, p1);
 
-			let D = Vector.cor(e1, e2);
-
             // 子三角形面积
-            let triangleArea = 0.5*D,
-                p = Vector.add(Vector.add(p1, p2), p3);
+            let triangleArea= 0.5*Vector.cor(e1, e2),
+                p = Vector.scl(1/3, Vector.add(Vector.add(p1, p2), p3));
             
-            centroid = Vector.add(centroid, Vector.scl(triangleArea/3, p));
+            totalArea += triangleArea;
+            
+            centroid = Vector.add(centroid, Vector.scl(triangleArea, p));
         }
 
-        centroid = Vector.scl(1/this.area, centroid);
+        centroid = Vector.scl(1/totalArea, centroid);
 
         return centroid;
     }
@@ -125,12 +140,12 @@ export class PolygonBody extends Body {
         let I = 0,
             pRef = [0, 0],
             inv3 = 1/3,
-            len = this.vex.length - 1;
+            len = this.vex.length;
 
-		for (let i = 0; i < len; ++i) {
+		for (let i = 0; i < len - 1; ++i) {
 			let p1 = pRef,
 			    p2 = this.vex[i],
-			    p3 = i + 1 < len ? this.vex[i + 1]: this.vex[0];
+			    p3 = this.vex[i + 1];
 
 			let e1 = Vector.sub(p2, p1),
 			    e2 = Vector.sub(p3, p1);
@@ -144,8 +159,8 @@ export class PolygonBody extends Body {
 			    ex2 = e2[0],
 			    ey2 = e2[1];
 
-			var intx2 = inv3*(0.25*(ex1*ex1 + ex2*ex1 + ex2*ex2) + (px*ex1 + px*ex2)) + 0.5*px*px;
-			var inty2 = inv3*(0.25*(ey1*ey1 + ey2*ey1 + ey2*ey2) + (py*ey1 + py*ey2)) + 0.5*py*py;
+			let intx2 = inv3*(0.25*(ex1*ex1 + ex2*ex1 + ex2*ex2) + (px*ex1 + px*ex2)) + 0.5*px*px,
+			    inty2 = inv3*(0.25*(ey1*ey1 + ey2*ey1 + ey2*ey2) + (py*ey1 + py*ey2)) + 0.5*py*py;
 
 			I += D * (intx2 + inty2);
 		}
@@ -170,15 +185,23 @@ export class PolygonBody extends Body {
             let x = updateInfo.val[0],
                 y = updateInfo.val[1];
 
+            // 更新顶点坐标
             this.vex = this.vex.map(v => [x + v[0], y + v[1]]);
+
+            // 更新质心坐标
+            this.centroid[0] = this.centroid[0] + x;
+            this.centroid[1] = this.centroid[1] + y;
         }
         // 更新旋转后的坐标
         else {
+            // 旋转顶点
             this.vex = rotateVex(
                 this.vex, 
                 this.pos, 
                 updateInfo.val
             );
+            
+            this.centroid = rotateVex([this.centroid], this.pos, updateInfo.val)[0];
         }    
 
         if(this.polygonType === polygonType.concave) {

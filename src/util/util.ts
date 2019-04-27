@@ -3,7 +3,8 @@ import { ShapeType } from '../render/LayerManager';
 import { Composite } from '../shape/composite';
 import { Shape } from '../shape/BaseShape';
 import { Matrix, RotateMatrix, TranslateMatrix, ResultMatrix, ScaleMatrix } from '../math/matrix';
-import { Vector } from '../math/vector';
+import { Vector, vector } from '../math/vector';
+import { polygonVex } from '../physical/body/PolygonBody';
 
 
 
@@ -178,7 +179,7 @@ export function divideConcavePoly(vex: Array<number[]>): Array<Array<number[]>> 
 
     for(i = 0, len = vex.length; i < len - 2; i++) {
         let vAxis = [vex[i + 1][0] - vex[i][0], vex[i + 1][1]- vex[i][1]], 
-            v = [vex[i + 2][0] - vex[i][0], vex[i + 2][1]- vex[i][1]];
+            v = [vex[i + 2][0] - vex[i][0], vex[i + 2][1] - vex[i][1]];
 
         if(Vector.cor(vAxis, v) < 0) {
             for(j = i + 3; j < len; j++) {
@@ -222,19 +223,23 @@ export function divideConcavePoly(vex: Array<number[]>): Array<Array<number[]>> 
 // 判断两条共线线段是否有重叠
 export function isOverlaps(line1: number[], line2: number[]): boolean {
     return (line1[1] > line2[0] && line1[0] < line2[1]) || (line2[1] > line1[0] && line2[0] < line1[1]);
+
+    
 }
 
 
 // 若两条共线线段重叠了，返回重叠长度
 export function getOverlapsLength(line1: number[], line2: number[]): number {
-    if(line1[1] > line2[0] && line1[0] < line2[1]) {
-        return line1[1] - line2[0];
-    }
-
-    if(line2[1] > line1[0] && line2[0] < line1[1]) {
+    // 若l1在前
+    if(line1[1] > line2[1]) {
         return line2[1] - line1[0];
     }
+    // l2在前
+    else {
+        return line1[1] - line2[0];
+    }
 }
+
 
 
 // 获取随机颜色
@@ -243,14 +248,53 @@ export function getRandomColor() {
 }
 
 
+// 判断点是否在多边形内
+export function isPointInPoly(vex: polygonVex, p: vector): boolean {
+    let i, j, len, flag = false;
+
+    for(i = 0, len = vex.length, j = len - 1; i < len; j = i++) {
+        if(((vex[i][1] > p[1]) != (vex[j][1] > p[1])) 
+        && (p[0] < (vex[j][0] - vex[i][0])*(p[1] - vex[i][1])/(vex[j][1] - vex[i][1]) + vex[i][0]))
+            flag = !flag;
+    }
+
+    return flag;
+};
 
 
 
+// 找出一点在直线的投影点
+export function findProjectionPoint(line: vector[], p: vector): vector {
+    let pro = [],
+        ref = line[0],
+        k = line[0][0] === line[1][0]? NaN: (line[0][1] - line[1][1])/(line[0][0] - line[1][0]);
 
+    if (k == 0) {
+        pro[0] = p[0];
+        pro[1] = ref[1];
+    }
+    else if(isNaN(k)) {
+        pro[0] = ref[0];
+        pro[1] = p[1];
+    }
+    else{
+        pro[0] = ((k*ref[0] + p[0]/k + p[1] - ref[1])/(1/k + k));
+        pro[1] = -1/k*(pro[0] - p[0]) + p[1];
+    }
 
+    return pro;
+}
 
+// 找出多个点的中点坐标
+export function findMidPoint(points: vector[]): vector {
+    if(points.length === 0) return null;
+    if(points.length === 1) return points[0];
 
+    let p1 = points[0],
+        p2 = points[1];
 
+    return [(p1[0] + p2[0])*0.5, (p1[1] + p2[1])*0.5];
+}
 
 
 

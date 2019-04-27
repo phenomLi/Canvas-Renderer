@@ -35,9 +35,9 @@ function getRandomColor() {
 }
 
 const World = new P2.World(document.getElementById("container"), {
-    gravity: [0, 5],
+    gravity: [0, 0],
     drag: {
-        k1: 0.2,
+        k1: 0,
         k2: 0
     }
 });
@@ -50,8 +50,7 @@ let b1 = new World.body.Boundary({
         position: 'right'
     });
     b3 = new World.body.Boundary({
-        position: 'bottom',
-        bound:-0.5
+        position: 'bottom'
     }),
     b4 = new World.body.Boundary({
         position: 'top'
@@ -63,21 +62,21 @@ World.append(b2);
 World.append(b3);
 World.append(b4);
 
-for(let i = 0; i < 5; i++) {
+for(let i = 0; i < 3; i++) {
     let poly_convex = new World.body.Polygon({
         shape: {
             pin: [Math.floor(600*Math.random()), Math.floor(400*Math.random())],
             vex: [[0, 0], [60, 60], [40, 80], [20, 90], [0, 60], [0, 0]],
             color: getRandomColor()
         },
-        physical: {
-            //linearVelocity: [Math.floor(Math.random()*5), Math.floor(Math.random()*5)]
+        nature: {
+            linearVelocity: [Math.floor(Math.random()*5), Math.floor(Math.random()*5)]
         },
         collided: function(b) {
-            //this.getShape().attr('color', 'red');
+            this.getShape().attr('color', 'red');
         },
         separated: function() {
-            //this.getShape().attr('color', 'green');
+            this.getShape().attr('color', 'green');
         }
     });
 
@@ -87,14 +86,14 @@ for(let i = 0; i < 5; i++) {
             radius: Math.floor(20*Math.random()) + 20,
             color: getRandomColor()
         },
-        physical: {
-            //linearVelocity: [Math.floor(Math.random()*5), Math.floor(Math.random()*5)]
+        nature: {
+            linearVelocity: [Math.floor(Math.random()*5), Math.floor(Math.random()*5)]
         },
         collided: function(b) {
-            //this.getShape().attr('color', 'red');
+            this.getShape().attr('color', 'red');
         },
         separated: function() {
-            //this.getShape().attr('color', 'green');
+            this.getShape().attr('color', 'green');
         }
     });
 
@@ -104,14 +103,14 @@ for(let i = 0; i < 5; i++) {
             vex: [[0, 0], [60, 60], [80, 30], [80, 100], [0, 100], [0, 0]],
             color: getRandomColor()
         },
-        physical: {
-            //linearVelocity: [Math.floor(Math.random()*5), Math.floor(Math.random()*5)]
+        nature: {
+            linearVelocity: [Math.floor(Math.random()*5), Math.floor(Math.random()*5)]
         },
         collided: function(b) {
-            //this.getShape().attr('color', 'red');
+            this.getShape().attr('color', 'red');
         },
         separated: function() {
-            //this.getShape().attr('color', 'green');
+            this.getShape().attr('color', 'green');
         }
     });
 

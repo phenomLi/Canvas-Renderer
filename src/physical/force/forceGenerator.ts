@@ -10,7 +10,7 @@ export default class ForceGenerator {
         this.force = force;
     }
 
-    generateForce(body: Body): vector {
+    generateForce(body: Body) {
         throw '此方法必须由子类重写';
     }
 }   

@@ -6,10 +6,10 @@ import { RectBody } from "./body/RectBody";
 import RendererCreator from "../render/core";
 import Motion from "./motion/core";
 import { vector } from "../math/vector";
-import Boundary from "./boundary/Boundary";
+import { Boundary, BoundaryTop, BoundaryRight, BoundaryBottom, BoundaryLeft } from "./boundary/Boundary";
 import BoundariesManager from "./boundary/core";
 import CollisionManager from "./collision/core";
-import { globalForce, Gravity, Drag } from "./force/globalForce";
+import { globalForce, Gravity, LinearDrag, AngularDrag } from "./force/globalForce";
 import Broadcast from "../Broadcast/Broadcast";
 import { TriBody } from "./body/TriBody";
 
@@ -18,8 +18,10 @@ import { TriBody } from "./body/TriBody";
 class WorldConfig {
     // 重力
     gravity: vector;
-    // 阻尼
-    drag: vector;
+    // 线速度阻尼
+    linearDrag: vector;
+    // 角速度阻尼
+    angularDrag: number;
 }
 
 
@@ -28,9 +30,14 @@ const body = {
     Circle: CirBody,
     Rect: RectBody,
     Tri: TriBody,
-    Boundary: Boundary
+    BoundaryTop: BoundaryTop,
+    BoundaryRight: BoundaryRight,
+    BoundaryBottom: BoundaryBottom,
+    BoundaryLeft: BoundaryLeft
 };
 
+
+type BodyType = Body | Boundary;
 
 
 /**
@@ -47,6 +54,7 @@ export default class WorldCreator {
     private motion: Motion;
     // 边界管理器
     private boundariesManager: BoundariesManager;
+    
 
     // 刚体对象
     public body: object;
@@ -58,15 +66,18 @@ export default class WorldCreator {
         // 初始化刚体堆
         this.bodyHeap = new BodyHeap();
 
-        // 初始化碰撞检测器
-        this.collisionManager = new CollisionManager(this.bodyHeap.getHeap());
         // 初始化边界管理器
         this.boundariesManager = new BoundariesManager([this.getWidth(), this.getHeight()]);
-        // 初始化运动对象
-        this.motion = new Motion(this.bodyHeap.getHeap(), this.collisionManager, this.boundariesManager);
-        
+
+        // 初始化碰撞检测器
+        this.collisionManager = new CollisionManager(this.bodyHeap.getHeap(), this.boundariesManager);
+
+        // 初始化运动模拟器
+        this.motion = new Motion(this.bodyHeap.getHeap(), this.collisionManager);
+
         this.body = body;
 
+        // 设置全局作用力
         this.setGlobalForce(opt);
 
         Broadcast.addListener('createShape', this.createShape.bind(this));
@@ -75,8 +86,13 @@ export default class WorldCreator {
     /**------------------------------------------------------- */
 
     private setGlobalForce(opt) {
+        opt.gravity = opt.gravity || [0, 5];
+        opt.linearDrag = opt.linearDrag || [0.2, 0];
+        opt.angularDrag = opt.angularDrag || 0.2;
+
         globalForce.gravity = new Gravity(opt.gravity);
-        globalForce.drag = new Drag(opt.drag.k1, opt.drag.k2);
+        globalForce.linearDrag = new LinearDrag(opt.linearDrag[0], opt.linearDrag[1]);
+        globalForce.angularDrag = new AngularDrag(opt.angularDrag);
     }
 
     private createShape(type, config) {
@@ -97,19 +113,24 @@ export default class WorldCreator {
         return this.Renderer.getShapesCount();
     }
  
-    append(body: Body | Boundary) {
-        if(body instanceof Boundary) {
-            this.boundariesManager.add(body);
+    append(body: BodyType | BodyType[]) {
+        if(Array.isArray(body)) {
+            body.map(item => this.append(item));
         }
         else {
-            this.Renderer.append(body.getShape());
-            this.bodyHeap.append(body);
+            if(body instanceof Boundary) {
+                this.boundariesManager.add(body);
+            }
+            else {
+                this.Renderer.append(body.getShape());
+                this.bodyHeap.append(body);
+            }
         }
     }
 
-    remove(body: Body | Boundary) {
+    remove(body: BodyType) {
         if(body instanceof Boundary) {
-            this.boundariesManager.remove(body.position);
+            this.boundariesManager.remove(body);
         }
         else {
             this.Renderer.remove(body.getShape());
@@ -124,5 +145,15 @@ export default class WorldCreator {
 
     bind(event: string, fn: (ev) => void) {
         this.Renderer.bind(event, fn);
+    }
+
+    // 暂停模拟
+    pause() {
+        this.motion.pause();
+    }
+
+    // 开始模拟
+    start() {
+        this.motion.start();
     }
 }
