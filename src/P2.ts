@@ -1,4 +1,4 @@
-import WorldCreator from "./physical/core";
+import WorldCreator from "./dynamic/core";
 import RendererCreator from "./render/core";
 
 

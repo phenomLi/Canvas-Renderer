@@ -67,32 +67,6 @@ World.append([b1, b2, b3, b4]);
 
 
 
-let tri = new World.body.Tri({
-    shape: {
-        pin: [200, 200],
-        edge: 100,
-        color: getRandomColor()
-    }
-});
-
-
-let rect = new World.body.Rect({
-    shape: {
-        pin: [260, 187],
-        edge: [200, 200],
-        color: getRandomColor()
-    }
-});
-
-World.append([rect, tri]);
-
-
-
-
-
-
-
-
 
 
 
@@ -101,7 +75,8 @@ World.bind('click', ev => {
         shape: {
             pin: [ev.x, ev.y],
             radius: 16,
-            color: getRandomColor()
+            color: getRandomColor(),
+            fill: false
         }
     });
 
@@ -111,11 +86,23 @@ World.bind('click', ev => {
         shape: {
             pin: [ev.x, ev.y],
             edge: [50, 50],
-            color: getRandomColor()
+            color: getRandomColor(),
+            fill: false
         }
     });
 
     World.append(r);
+
+    let t = new World.body.Tri({
+        shape: {
+            pin: [ev.x, ev.y],
+            edge: Math.floor(Math.random()*50) + 50,
+            color: getRandomColor(),
+            fill: false
+        }
+    });
+
+    World.append(t);
 });
 
 
@@ -167,7 +154,8 @@ document.getElementById('concave').addEventListener('click', function() {
         shape: {
             pin: getRandomPos(World.getWidth(), World.getHeight()),
             vex: [[0, 0], [50, 50], [100, 0], [100, 100], [0, 100], [0, 0]],
-            color: getRandomColor()
+            color: getRandomColor(),
+            fill: false
         }
     });
 
@@ -179,7 +167,8 @@ document.getElementById('convex').addEventListener('click', function() {
         shape: {
             pin: getRandomPos(World.getWidth(), World.getHeight()),
             vex: [[0, 0], [50, -50], [100, 0], [100, 50], [0, 50], [0, 0]],
-            color: getRandomColor()
+            color: getRandomColor(),
+            fill: false
         }
     });
 

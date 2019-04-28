@@ -4,7 +4,7 @@ import { Composite } from '../shape/composite';
 import { Shape } from '../shape/BaseShape';
 import { Matrix, RotateMatrix, TranslateMatrix, ResultMatrix, ScaleMatrix } from '../math/matrix';
 import { Vector, vector } from '../math/vector';
-import { polygonVex } from '../physical/body/PolygonBody';
+import { polygonVex } from '../dynamic/body/PolygonBody';
 
 
 
@@ -297,8 +297,31 @@ export function findMidPoint(points: vector[]): vector {
 }
 
 
+// 计算平均数
+export function calcAverage(data: number[]): number {
+    let n = data.length,
+        sum = 0;
+
+    for(let i = 0; i < n; i ++) {
+        sum += data[i];
+    }
+
+    return sum/n;
+}
 
 
+// 计算标准差
+export function calcStandardDeviation(data: number[]): number {
+    let sum = 0,
+        n = data.length,
+        x = calcAverage(data);
+
+    for(let i = 0; i < n; i++) {
+        sum += Math.pow(data[i] - x, 2);
+    }
+
+    return Math.sqrt(sum/n);
+}
 
 
 
