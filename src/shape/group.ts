@@ -1,4 +1,3 @@
-import Broadcast from '../Broadcast/Broadcast';
 import { ShapeType } from '../render/LayerManager';
 import { DFS } from '../util/util';
 import { Base } from './BaseShape';
@@ -76,7 +75,7 @@ export class Group extends Base {
         
             this.count += (<Group>shape).getCount();
 
-            this.isMount && Broadcast.notify('update');
+            this.isMount && this.layer.update();
         }
     }
 
@@ -92,7 +91,7 @@ export class Group extends Base {
 
         this.count -= (<Group>shape).getCount();
 
-        this.isMount && Broadcast.notify('update');
+        this.isMount && this.layer.update();
     }
 
     render(ctx: CanvasRenderingContext2D) {

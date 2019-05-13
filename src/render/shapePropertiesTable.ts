@@ -18,8 +18,8 @@ const PropertiesManager = {
     },
 
     init() {
-        this.baseProp.writableProperties = ['x', 'y', 'color', 'fill', 'opacity', 'rotate', 'scale', 'show', 'zIndex', 'lineWidth'];
-        this.baseProp.readonlyProperties = ['id', 'type', 'center', 'tag'];
+        this.baseProp.writableProperties = ['x', 'y', 'color', 'fill', 'opacity', 'rotate', 'scale', 'show', 'zIndex', 'lineWidth', 'tag', 'shadow'];
+        this.baseProp.readonlyProperties = ['id', 'type', 'center'];
         this.baseProp.animateProperties = ['x', 'y', 'color', 'opacity', 'rotate', 'lineWidth'];
         this.baseProp.notRePathProperties = ['color', 'fill', 'opacity', 'show', 'lineWidth'];
         this.baseProp.requiredProperties = ['pin'];

@@ -1,19 +1,15 @@
 import Animator, { state } from "./animator";
-import Broadcast from "../Broadcast/Broadcast";
 
 
 
 
 export default class AnimationManager {
-    
     private animationHeap: Array<Animator>;
     private isRun: boolean;
 
     constructor() {
         this.animationHeap = [];
         this.isRun = false;
-
-        Broadcast.addListener('animation', this.add.bind(this));
     }
 
     add(ani: Animator) {

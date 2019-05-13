@@ -1,13 +1,19 @@
-import { event, keyBoardEvent } from '../event/core';
-import { rotate, scale, rotateVex, translate } from '../util/util';
-import Broadcast from '../Broadcast/Broadcast';
-import Animation from '../animation/core';
+import { event, keyBoardEvent, EventSystem } from '../event/core';
+import { rotate, scale,  translate } from '../util/util';
 import ShapePropertiesTable from '../render/shapePropertiesTable';
 import Animator from '../animation/animator';
+import Layer from '../render/layer';
+import { LayerManager } from '../render/LayerManager';
+import AnimationManager from '../animation/core';
 
 
 
 export class Base {
+    protected layerManager: LayerManager;
+    protected layer: Layer;
+    protected eventSystem: EventSystem;
+    public animationManager: AnimationManager;
+
     protected _id: symbol;
     protected _type: string;
     protected _tag: string | number;
@@ -52,20 +58,62 @@ export class Base {
         });
     }
 
+    // 初始化图形所在图层管理器
+    setLayerManagerContext(lm: LayerManager) {
+        this.layerManager = lm;
+
+        if(this._type === 'Composite' || this._type === 'Group') {
+            this.getShapeList().map(item => {
+                item.setLayerManagerContext(lm);
+            });
+        }
+    }
+
+    // 初始化图形所在图层
+    setLayerContext(layer: Layer) {
+        this.layer = layer;
+
+        if(this._type === 'Composite' || this._type === 'Group') {
+            this.getShapeList().map(item => {
+                item.setLayerContext(layer);
+            });
+        }
+    }
+
+    // 初始化图形所在事件系统
+    setEventSystemContext(es: EventSystem) {
+        this.eventSystem = es;
+
+        if(this._type === 'Composite' || this._type === 'Group') {
+            this.getShapeList().map(item => {
+                item.setEventSystemContext(es);
+            });
+        }
+    }
+
+    setAnimationManagerContext(am: AnimationManager) {
+        this.animationManager = am;
+
+        if(this._type === 'Composite' || this._type === 'Group') {
+            this.getShapeList().map(item => {
+                item.setAnimationManagerContext(am);
+            });
+        }
+    }
+
     // 属性get、set(暴露api)
     public attr(attr: string, val?: any): any | Base {
-        if(!ShapePropertiesTable[this._type].readableProperties.includes(attr)) {
-            console.warn(`${attr}属性不存在`);
-            return this;
-        }
+        // if(!ShapePropertiesTable[this._type].readableProperties.includes(attr)) {
+        //     console.warn(`${attr}属性不存在`);
+        //     return this;
+        // }
 
         if(val !== undefined) {
-            if(ShapePropertiesTable[this._type].writableProperties.includes(attr)) {
+            //if(ShapePropertiesTable[this._type].writableProperties.includes(attr)) {
                 this[`setter${attr.substring(0, 1).toUpperCase() + attr.substring(1)}`](val);
-                this.isMount && Broadcast.notify('update', this._zIndex);
-                
-            }
-            else console.warn(`${attr}不能被修改`);
+                this.isMount && this.layer.update();
+            // }
+            // else console.warn(`${attr}不能被修改`);
 
             return this;
         }
@@ -142,6 +190,8 @@ export class shapeConfig {
     fill?: boolean;
     //透明度
     opacity?: number;
+    // 阴影
+    shadow?: string | Array<string>;
     // 线条粗细
     lineWidth?: number
     // 旋转
@@ -188,6 +238,7 @@ export class Shape extends Base {
     protected _color: string;
     protected _fill: boolean;
     protected _opacity: number;
+    protected _shadow: Array<string>;
     protected _lineWidth: number;
     protected _rotate: number;
     protected _scale: number[];
@@ -204,6 +255,8 @@ export class Shape extends Base {
 
     // 鼠标是否在当前图形里面
     protected mouseIn: boolean;
+    // 是否在进行动画
+    public isAnimating: boolean;
 
     // 异步路径重绘请求计数器
     protected aSyncRePathRequestCount: number;
@@ -226,6 +279,7 @@ export class Shape extends Base {
         this._fill = (config.fill === undefined)? true: config.fill;
         this._lineWidth = config.lineWidth || 1;
         this._opacity = config.opacity || 1;
+        this._shadow = config.shadow? (<string>config.shadow).split(' '): ['0', '0', '0', '#000'];
         this._rotate = config.rotate || 0;
         this._scale = config.scale || [1, 1];
 
@@ -237,6 +291,7 @@ export class Shape extends Base {
         this.lastScale = [1, 1];
 
         this.mouseIn = false;
+        this.isAnimating = false;
         this.eventList = [];
         this.camelCaseEventName = {};
 
@@ -259,6 +314,8 @@ export class Shape extends Base {
             center: this._center,
             color: this._color,
             fill: this._fill,
+            opacity: this._opacity,
+            shadow: this._shadow,
             rotate: this._rotate,
             scale: this._scale,
             zIndex: this._zIndex,
@@ -330,13 +387,10 @@ export class Shape extends Base {
         if(zIndex === this._zIndex) return;
 
         // 在旧的layer移除该图层
-        Broadcast.notify('remove', {
-            shape: this,
-            zIndex: this._zIndex
-        });
+        this.layer.remove(this);
 
         // 在新的layer添加该图形
-        Broadcast.notify('append', {
+        this.layerManager.append({
             shape: this,
             zIndex: zIndex
         });
@@ -352,7 +406,7 @@ export class Shape extends Base {
             // 若是键盘事件数组
             if(item.fn instanceof Array) {
                 item.fn.map(i => {
-                    Broadcast.notify('add_event', {
+                    this.eventSystem.addEvent({
                         shape: this,
                         eventName: item.eventName,
                         fn: i,
@@ -361,7 +415,7 @@ export class Shape extends Base {
                 });
             }
             else {
-                Broadcast.notify('add_event', {
+                this.eventSystem.addEvent({
                     shape: this,
                     eventName: item.eventName,
                     fn: item.fn,
@@ -375,14 +429,14 @@ export class Shape extends Base {
     private delEvent(eventInfo) {
         eventInfo.map(item => {
             if(item.eventName === 'keypress') {
-                Broadcast.notify('del_event', {
+                this.eventSystem.delEvent({
                     shape: this,
                     eventName: item.eventName,
                     keyCode: item.keyCode
                 });
             }
             else {
-                Broadcast.notify('del_event', {
+                this.eventSystem.delEvent({
                     shape: this,
                     eventName: item.eventName
                 });
@@ -465,7 +519,7 @@ export class Shape extends Base {
             }
         }
 
-        let animation = (new Animator({
+        let animation = (new Animator(this, {
             value: values,
             duration: config.duration,
             delay: config.delay,
@@ -514,22 +568,22 @@ export class Shape extends Base {
     // 形变path2D路径（位移，旋转，缩放）
     transformPath(async: boolean = false) {
         //异步路径形变
-        if(async) {
-            this.rePathRequestCount++;
+        // if(async) {
+        //     this.rePathRequestCount++;
 
-            requestAnimationFrame(() => {
-                this.aSyncRePathRequestCount++;
+        //     requestAnimationFrame(() => {
+        //         this.aSyncRePathRequestCount++;
 
-                if(this.aSyncRePathRequestCount === this.rePathRequestCount) {
-                    this.rePathRequestCount = this.aSyncRePathRequestCount = 0;
-                    this.translatePath().rotatePath().scalePath();
-                }
-            });
-        }
-        // 形变路径
-        else {
-            this.translatePath().rotatePath().scalePath();
-        }
+        //         if(this.aSyncRePathRequestCount === this.rePathRequestCount) {
+        //             this.rePathRequestCount = this.aSyncRePathRequestCount = 0;
+        //             this.translatePath().rotatePath();
+        //         }
+        //     });
+        // }
+        // // 形变路径
+        // else {
+            this.translatePath().rotatePath();
+        //}
     }
 
 
@@ -585,6 +639,10 @@ export class Shape extends Base {
         if(!this._show) return; 
 
         ctx.globalAlpha = this._opacity;
+        ctx.shadowBlur = parseInt(<string>this._shadow[0]);
+        ctx.shadowOffsetX = parseInt(<string>this._shadow[1]);
+        ctx.shadowOffsetY = parseInt(<string>this._shadow[2]);
+        ctx.shadowColor = <string>this._shadow[3];
 
         if(this._fill) {
             ctx.fillStyle = this._color;

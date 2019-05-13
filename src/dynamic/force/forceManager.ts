@@ -26,7 +26,7 @@ export default class ForceManager {
         this.angularForceList.push(force);
     }   
 
-   
+    
     applyLinearForce(body: Body) {
         let force = [0, 0];
 

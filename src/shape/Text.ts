@@ -150,6 +150,7 @@ export class TextBlock extends Shape {
         ctx.font = this._fontSize + this.font;
         ctx.direction = this._direction;
         ctx.textAlign = this._align;
+        ctx.textBaseline = 'top';
         ctx.globalAlpha = this._opacity;
 
         if(this._fill) {

@@ -1,5 +1,4 @@
 import { Shape, shapeConfig } from './BaseShape';
-import Broadcast from '../Broadcast/Broadcast';
 import { rotate, DFS, scale } from '../util/util';
 import { TextBlock } from './Text';
 
@@ -10,7 +9,6 @@ type CompositeContainType = Shape | Composite;
 class compositeConfig extends shapeConfig {
     center: Array<number>; //*
     shapes: Array<CompositeContainType>;
-    deep: boolean;
 }
 
 
@@ -28,7 +26,6 @@ export class Composite extends Shape {
     constructor(config: compositeConfig) {
         super(config, 'Composite');
 
-        this.deep = config.deep === undefined? true: config.deep;
         this._center = config.center;
 
         this.shapeList = [];
@@ -51,10 +48,13 @@ export class Composite extends Shape {
                 console.warn('group类型不能加入composite');
                 return;
             }
-    
-            this.shapeList.push(this.shapeProcessor(deep? Broadcast.notify('clone', shape): shape));
 
-            this.isMount && Broadcast.notify('update');
+            this.shapeList.push(this.shapeProcessor(shape, {
+                x: this._x,
+                y: this._y
+            }));
+
+            this.isMount && this.layer.update();
         }
     }
 
@@ -73,8 +73,10 @@ export class Composite extends Shape {
         this._center[0] = this._center[0] + d;
 
         this.shapeList.map(item => {  
-            item.attr('x', item.attr('x') + d);
-            this.shapeProcessor(item);
+            this.shapeProcessor(item, {
+                x: d,
+                y: 0
+            });
         });
     }
 
@@ -85,8 +87,10 @@ export class Composite extends Shape {
         this._center[1] = this._center[1] + d;
 
         this.shapeList.map(item => {  
-            item.attr('y', item.attr('y') + d);
-            this.shapeProcessor(item);
+            this.shapeProcessor(item, {
+                x: 0,
+                y: d
+            });
         });
     }
 
@@ -133,16 +137,14 @@ export class Composite extends Shape {
         return this.shapeList;
     }
     
-    // 处理一下新加进来的shape(为新shape加上此Composite容器的旋转和形变属性)
-    private shapeProcessor(shape: CompositeContainType): CompositeContainType {
+    // 处理一下新加进来的shape(为新shape加上此Composite容器的位移，旋转和形变属性)
+    private shapeProcessor(shape: CompositeContainType, subDistance): CompositeContainType {
+        shape.attr('x', shape.attr('x') + subDistance.x).attr('y', shape.attr('y') + subDistance.y);
+        
         // 对加入的每个图形进行旋转操作
         this._rotate && this.rotatePath(shape);
         // 对加入的每个图形进行形变操作
         this._scale && this.scalePath(shape);
-
-        
-        
-        
 
         return shape;
     }

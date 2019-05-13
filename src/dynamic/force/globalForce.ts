@@ -7,9 +7,11 @@ import { Body } from "../body/body";
 export default class ForceGenerator {
     protected force: vector;
     
-    constructor(force?: vector) {
-        this.force = force;
+    constructor(force: vector) {
+        this.set(force);
     }
+
+    set(force: vector) {}
 
     apply(body: Body): vector | number | void {
         throw '此方法必须由子类重写';
@@ -31,8 +33,12 @@ export class Gravity extends ForceGenerator {
         super(g);
     }
 
+    set(g: vector) {
+        this.force = g;
+    }
+
     apply(body: Body): vector {
-        return Vector.scl(body.mass*0.06, this.force);
+        return Vector.scl(body.mass/10, this.force);
     }
 }
 
@@ -44,11 +50,13 @@ export class LinearDrag extends ForceGenerator {
     private k1: number;
     private k2: number;
 
-    constructor(k1: number, k2: number) {
-        super();
+    constructor(k: vector) {
+        super(k);
+    }
 
-        this.k1 = k1;
-        this.k2 = k2;
+    set(k: vector) {
+        this.k1 = k[0];
+        this.k2 = k[1];
     }
 
     apply(body: Body): vector {
@@ -65,9 +73,11 @@ export class AngularDrag extends ForceGenerator {
     private k: number;
 
     constructor(k: number) {
-        super();
+        super([k]);
+    }
 
-        this.k = k;
+    set(k: vector) {
+        this.k = k[0];
     }
 
     apply(body: Body) {

@@ -1,6 +1,5 @@
 import { DFS } from '../util/util';
 import Layer from './layer';
-import Broadcast from '../Broadcast/Broadcast';
 import shapes from './shapes';
 import { Shape } from '../shape/BaseShape';
 import { Group } from '../shape/Group';
@@ -9,6 +8,11 @@ import { Composite } from '../shape/composite';
 // 图形类
 export type ShapeType = Shape | Group | Composite;
 
+
+export class appendInfo {
+    shape: ShapeType;
+    zIndex: number;
+}
 
 
 // 容器管理器：管理所有layer
@@ -23,22 +27,12 @@ export class LayerManager {
     // 总图形数量
     private totalShapeCount: number;
 
-    constructor(containerEle: HTMLElement) {
+    constructor(containerEle: HTMLElement, containerSize: number[]) {
         this.defaultZIndex = 100;
         this.totalShapeCount = 0;
         this.container = containerEle;
-        this.containerSize = [this.container.offsetWidth, this.container.offsetHeight];
+        this.containerSize = containerSize;
         this.layerMap = {};
-
-        //初始化广播器(监听者：容器管理器的界面克隆方法)
-        Broadcast.addListener('clone', this.clone.bind(this));
-
-        //初始化广播器(监听者：容器管理器的界面重刷方法)
-        Broadcast.addListener('update', this.update.bind(this));
-        //初始化广播器(监听者：容器管理器的界面添加方法)
-        Broadcast.addListener('append', this.append.bind(this));
-        //初始化广播器(监听者：容器管理器的界面移除方法)
-        Broadcast.addListener('remove', this.remove.bind(this));
     }
 
     private createLayer(zIndex: number) {
@@ -69,20 +63,22 @@ export class LayerManager {
 
 
     
-    public append(appendInfo): void {
-        let z = appendInfo['zIndex'];
+    public append(appendInfo: appendInfo): void {
+        let z = appendInfo.zIndex;
 
         if(this.layerMap[z] === undefined) {
             this.createLayer(z);
         }
 
-        this.layerMap[z].append(appendInfo['shape']);
+        appendInfo.shape.setLayerManagerContext(this);
+
+        this.layerMap[z].append(appendInfo.shape);
     }
 
-    public remove(removeInfo): void {
-        let z = removeInfo['zIndex'];
+    public remove(removeInfo: appendInfo): void {
+        let z = removeInfo.zIndex;
 
-        this.layerMap[z].remove(removeInfo['shape']);
+        this.layerMap[z].remove(removeInfo.shape);
 
         if(this.layerMap[z].getCount() === 0) {
             this.destroyLayer(z);

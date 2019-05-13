@@ -42,8 +42,8 @@ export class Boundary {
     private separatedFn: Function;
 
     constructor(opt: BoundaryConfig) {
-        this.restitution = opt.restitution || 0.8;
-        this.friction = opt.friction || 0.2;
+        this.restitution = opt.restitution === undefined? 0.7: opt.restitution;
+        this.friction = opt.friction === undefined? 0.2: opt.friction;
         this.inverseMass = 0;
 
         this.collidedFn = opt.collided || (() => {});

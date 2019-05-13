@@ -1,5 +1,5 @@
 import { vector, Vector } from "../../math/vector";
-import { Body } from "../body/body";
+import { Body, staticType } from "../body/body";
 import { collisionRes, collisionInfo } from './collisionDetection';
 import { collisionType } from "./SAT";
 import ImpulseManager from "../force/impulseManager";
@@ -146,6 +146,15 @@ export default class CollisionResolver {
     public resolve(collisionRes: collisionRes) {
         let body1 = collisionRes.body1,
             body2 = collisionRes.body2;
+
+        // 若是静止刚体和边界的碰撞，或是静止刚体与静止刚体的碰撞，则不处理
+        if(
+            body1.static === staticType.total && body2 === null 
+            || body1 === null && body2.static === staticType.total
+            || body1.static === staticType.total && body2.static === staticType.total
+            ) {
+            return;
+        }
 
         for(let i = 0, len = collisionRes.collisionInfo.length; i < len; i++) {
             let info = collisionRes.collisionInfo[i];

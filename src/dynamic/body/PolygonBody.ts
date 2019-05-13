@@ -1,7 +1,6 @@
 import BoundRect from "../collision/boundRect";
-import { Body, BodyConfig, staticType } from "./body";
-import { isConcavePoly, divideConcavePoly, closePolyVex, rotateVex, calcPolyRange, isPointInPoly } from "../../util/util";
-import Broadcast from "../../Broadcast/Broadcast";
+import { Body, BodyConfig } from "./body";
+import { isConcavePoly, divideConcavePoly, closePolyVex, rotateVex, calcPolyRange } from "../../util/util";
 import { vector, Vector } from "../../math/vector";
 
 

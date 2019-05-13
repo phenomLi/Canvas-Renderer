@@ -1,5 +1,6 @@
 import Tween from './tween';
-import Broadcast from '../Broadcast/Broadcast';
+import AnimationManager from './core';
+import { Shape } from '../shape/BaseShape';
 
 
 class animationConfig {
@@ -37,7 +38,10 @@ export enum state {
 
 
 export default class Animator {
+    private animationManager: AnimationManager;
+
     public id: Symbol;
+    private shape: Shape;
     private _value: Array<valueInfo>;
     private _duration :number;
     private _delay: number;
@@ -59,8 +63,9 @@ export default class Animator {
     private isLoop: boolean;
     private animationQueueIndex: number;
 
-    constructor(config: animationConfig) {
+    constructor(shape: Shape, config: animationConfig) {
         this.id = Symbol();
+        this.shape = shape;
         this.isLoop = false;
         this.animationQueue = [];
         this.animationQueueIndex = 0;
@@ -131,7 +136,7 @@ export default class Animator {
     private renderFunction(time, duration) {
         // 对value应用缓动函数，返回结果
         const values = this._value.map(value => this._timingFunction(time, value.start, value.end - value.start, duration)); 
-        this._renderFunction.apply(this, values);
+        this._renderFunction.apply(this.shape, values);
     }
 
 
@@ -149,6 +154,10 @@ export default class Animator {
 
     /** --------------------------暴露的api------------------------------------- */
 
+    setAnimationContext(am: AnimationManager) {
+        this.animationManager = am;
+    }
+
     // 开始
     public start() {
         this.animationQueueIndex++;
@@ -159,7 +168,7 @@ export default class Animator {
 
             this._onStart();
 
-            Broadcast.notify('animation', this);
+            this.shape.animationManager.add(this);
         }, this._delay);
     }
 

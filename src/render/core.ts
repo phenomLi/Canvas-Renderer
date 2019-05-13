@@ -31,6 +31,8 @@ const math = {
 // 渲染器创建器
 export default class RendererCreator {
     private container: HTMLElement;
+    private containerWidth: number
+    private containerHeight: number;
     private containerLeft: number;
     private containerTop: number;
     
@@ -44,16 +46,35 @@ export default class RendererCreator {
     public math;
     public animation: Function;
 
-    constructor(containerEle: HTMLElement) {
+    constructor(containerEle: HTMLElement, opt?) {
         this.container = containerEle;
+
+        if(opt && opt.size) {
+            this.container.style.width = opt.size[0] + 'px';
+            this.container.style.height = opt.size[1] + 'px';
+
+            this.containerWidth = opt.size[0];
+            this.containerHeight = opt.size[1];
+        }
+        else {
+            this.containerWidth = this.container.offsetWidth;
+            this.containerHeight = this.container.offsetHeight;
+        }   
+
+        if(opt && opt.offset) {
+            this.containerLeft = opt.offset[0];
+            this.containerTop = opt.offset[1];
+        }
+        else {
+            this.containerLeft = containerEle.scrollLeft + containerEle.offsetLeft;
+            this.containerTop = containerEle.scrollTop + containerEle.offsetTop;
+        }
+
         this.container.style.position = 'relative';
         this.container.style.userSelect = 'none';
 
-        this.containerLeft = containerEle.scrollLeft + containerEle.clientLeft;
-        this.containerTop = containerEle.scrollTop + containerEle.clientTop;
-
         // 初始化容器管理器
-        this.layerManager = new LayerManager(this.container);
+        this.layerManager = new LayerManager(this.container, [this.containerWidth, this.containerHeight]);
         // 初始事件系统
         this.eventSystem = new EventSystem(
             this.container, 
@@ -75,12 +96,12 @@ export default class RendererCreator {
 
     // 获取容器的高
     public getHeight(): number {
-        return this.container.offsetHeight;
+        return this.containerHeight;
     }
 
     // 获取容器的宽
     public getWidth(): number {
-        return this.container.offsetWidth;
+        return this.containerWidth;
     }
 
     // 获取图形数量
@@ -116,12 +137,12 @@ export default class RendererCreator {
         if(shape === undefined) return;
 
         if(shape instanceof Array) {
-            shape.map(item => this.layerManager.append({
-                shape: item,
-                zIndex: item.attr('zIndex')
-            }));
+            shape.map(item => this.append(item));
         }
         else {
+            shape.setEventSystemContext(this.eventSystem);
+            shape.setAnimationManagerContext(this.animationManager);
+
             this.layerManager.append({
                 shape,
                 zIndex: shape.attr('zIndex')

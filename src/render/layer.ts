@@ -48,6 +48,8 @@ export default class Layer {
     }
 
     public append(shape: ShapeType): void {
+        shape.setLayerContext(this);
+
         this.shapeHeap.append(shape);
         this.update();
 

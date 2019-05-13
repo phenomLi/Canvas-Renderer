@@ -1,13 +1,14 @@
 import { Shape } from '../shape/BaseShape';
 import { isInShape } from '../util/util';
-import Broadcast from '../Broadcast/Broadcast';
 
 
 export class eventInfo {
     shape: Shape;
     eventName: string;
-    fn: ((e: event) => {}) | keyBoardEvent;
-    zIndex: number;
+    fn?: ((e: event) => {}) | keyBoardEvent;
+    zIndex?: number;
+    keyCode?: number;
+    ctx?: CanvasRenderingContext2D;
 }
 
 
@@ -55,11 +56,6 @@ export class EventSystem {
         this.mousedownEventList = [];
         this.mouseupEventList = [];
         this.keypressEventMap = {};
-
-        //初始化广播器(监听者：事件系统管理器的事件添加方法)
-        Broadcast.addListener('add_event', this.addEvent.bind(this));
-        //初始化广播器(监听者：事件系统管理器的事件删除方法)
-        Broadcast.addListener('del_event', this.delEvent.bind(this));
 
         this.init();
     }
@@ -129,17 +125,6 @@ export class EventSystem {
             let x = ev['clientX'] - this.containerLeft,
                 y = ev['clientY'] - this.containerTop;  
 
-            this['mouseoverEventList'].map((eventInfo: eventInfo) => {
-                if(isInShape(eventInfo['ctx'], eventInfo.shape, x, y)) {
-                    // 若之前鼠标不在该图形上，而且现在鼠标在该图形上
-                    if(!eventInfo.shape.isMouseIn()) {
-                        // 触发mouseover（一次）
-                        this.omitEvent(eventInfo.shape, <(e: event) => {}>eventInfo.fn, x, y);
-                        // 设置图形鼠标状态为true
-                        eventInfo.shape.isMouseIn(true);
-                    }
-                }
-            });
 
             this['mouseoutEventList'].map((eventInfo: eventInfo) => {
                 if(!isInShape(eventInfo['ctx'], eventInfo.shape, x, y)) {
@@ -152,6 +137,19 @@ export class EventSystem {
                     }
                 }
             });
+
+            this['mouseoverEventList'].map((eventInfo: eventInfo) => {
+                if(isInShape(eventInfo['ctx'], eventInfo.shape, x, y)) {
+                    // 若之前鼠标不在该图形上，而且现在鼠标在该图形上
+                    if(!eventInfo.shape.isMouseIn()) {
+                        // 触发mouseover（一次）
+                        this.omitEvent(eventInfo.shape, <(e: event) => {}>eventInfo.fn, x, y);
+                        // 设置图形鼠标状态为true
+                        eventInfo.shape.isMouseIn(true);
+                    }
+                }
+            });
+
 
             this['mousemoveEventList'].map((eventInfo: eventInfo) => {
                 if(isInShape(eventInfo['ctx'], eventInfo.shape, x, y)) {
@@ -178,7 +176,7 @@ export class EventSystem {
 
     // 添加事件
     addEvent(eventInfo: eventInfo) {
-        eventInfo['ctx'] = this.layerMap[eventInfo.zIndex].getCTX();
+        eventInfo.ctx = this.layerMap[eventInfo.zIndex].getCTX();
 
         if(eventInfo.eventName === 'keypress') {
             if(this.keypressEventMap[(<keyBoardEvent>eventInfo.fn).keyCode] === undefined) 

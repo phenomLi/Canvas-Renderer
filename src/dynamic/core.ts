@@ -9,9 +9,8 @@ import { vector } from "../math/vector";
 import { Boundary, BoundaryTop, BoundaryRight, BoundaryBottom, BoundaryLeft } from "./boundary/Boundary";
 import BoundariesManager from "./boundary/core";
 import CollisionManager from "./collision/core";
-import { Gravity, LinearDrag, AngularDrag } from "./force/globalForce";
+import ForceGenerator, { Gravity, LinearDrag, AngularDrag } from "./force/globalForce";
 import ForceManager from './force/forceManager';
-import Broadcast from "../Broadcast/Broadcast";
 import { TriBody } from "./body/TriBody";
 
 
@@ -58,12 +57,17 @@ export default class WorldCreator {
     // 全局力管理器
     private forceManager: ForceManager;
 
-    // 刚体对象
+    // 刚体对象集合
     public body: object;
+
+    private opt;
+    private gravity: ForceGenerator;
+    private linearDrag: ForceGenerator;
+    private angularDrag: ForceGenerator;
 
     constructor(containerEle: HTMLElement, opt: WorldConfig) {
         // 初始化渲染器
-        this.Renderer = new RendererCreator(containerEle);
+        this.Renderer = new RendererCreator(containerEle, opt);
 
         // 初始化刚体堆
         this.bodyHeap = new BodyHeap();
@@ -82,26 +86,35 @@ export default class WorldCreator {
         this.body = body;
 
         // 设置全局作用力
-        this.setGlobalForce(opt);
-
-        Broadcast.addListener('createShape', this.createShape.bind(this));
+        this.initGlobalForce(opt);
     }
 
     /**------------------------------------------------------- */
 
-    private setGlobalForce(opt) {
-        opt.gravity = opt.gravity || [0, 5];
-        opt.linearDrag = opt.linearDrag || [0.2, 0];
-        opt.angularDrag = opt.angularDrag || 0.15;
+    private initGlobalForce(opt) {
+        this.opt = opt;
+        
+        this.opt.gravity = opt.gravity || [0, 5];
+        this.opt.linearDrag = opt.linearDrag || [0.2, 0];
+        this.opt.angularDrag = opt.angularDrag || 0.15;
 
-        this.forceManager.addLinearForce(new Gravity(opt.gravity));
-        this.forceManager.addLinearForce(new LinearDrag(opt.linearDrag[0], opt.linearDrag[1]));
-        this.forceManager.addAngularForce(new AngularDrag(opt.angularDrag));
+        this.gravity = new Gravity(opt.gravity);
+        this.linearDrag = new LinearDrag(opt.linearDrag);
+        this.angularDrag = new AngularDrag(opt.angularDrag);
+
+        this.forceManager.addLinearForce(this.gravity);
+        this.forceManager.addLinearForce(this.linearDrag);
+        this.forceManager.addAngularForce(this.angularDrag);
     }
 
-    private createShape(type, config) {
-        return new this.Renderer.shapes[type](config);
+    public setGlobalForce(opt) {
+        this.opt = Object.assign(this.opt, opt);
+
+        this.gravity.set(this.opt.gravity);
+        this.linearDrag.set(this.opt.linearDrag);
+        this.angularDrag.set([this.opt.angularDrag]);
     }
+
 
     /**------------------------------------------------------ */
 
@@ -115,6 +128,10 @@ export default class WorldCreator {
 
     getBodyCount(): number {
         return this.Renderer.getShapesCount();
+    }
+
+    addWorldStepFn(fn: Function) {
+        this.motion.addWorldStepFun(fn);
     }
  
     append(body: BodyType | BodyType[]) {

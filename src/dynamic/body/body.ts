@@ -6,9 +6,9 @@ import { rectangleConfig } from "../../shape/Rectangle";
 import { circleConfig } from "../../shape/Circle";
 import { vector, Vector } from "../../math/vector";
 import ForceManager from "../force/forceManager";
-import Broadcast from "../../Broadcast/Broadcast";
 import { calcStandardDeviation } from "../../util/util";
 
+import shapes from './../../render/shapes';
 
 /**
  * static:
@@ -17,9 +17,9 @@ import { calcStandardDeviation } from "../../util/util";
  * 3. none: 自由（默认值）
  */
 export enum staticType {
-    none = 'none',
-    position = 'pos',
-    total = 'total'
+    none = 0,
+    position = 1,
+    total = 2
 }
 
 
@@ -114,7 +114,7 @@ export class Body {
     public torque: number;
 
     // 固定
-    public static: string; 
+    public static: number; 
 
     public curMotion: number;
     // 记录10帧内的运动值
@@ -126,10 +126,8 @@ export class Body {
     protected separatedFn: Function;
 
 
-
-
     constructor(opt: BodyConfig, type: string) {
-        this.shape = Broadcast.notify('createShape', type, opt.shape);
+        this.shape = new shapes[type](opt.shape);
         this.id = this.shape.attr('id');
 
         this.initPhysicalData(opt);
@@ -147,13 +145,13 @@ export class Body {
         this.mass = 0;
         this.inverseMass = -1;
         this.friction = 0;
-        this.restitution = 0.7;
+        this.restitution = 0.9;
         this.area = 0;
         this.density = 0.01;
         this.centroid = [0, 0];
         this.rotationInertia = 0;
         this.torque = 0;
-        this.static = 'none';
+        this.static = staticType.none;
         this.state = state.init;
         this.isCollide = false;
         this.curMotion = 0;
@@ -162,10 +160,32 @@ export class Body {
         if(opt.nature) {
             this.linearVel = opt.nature.linearVelocity || this.linearVel;
             this.angularVel = opt.nature.angularVelocity || this.angularVel;
-            this.static = opt.nature.static || 'none';
             this.friction = opt.nature.friction || this.friction;
             this.restitution = opt.nature.restitution || this.restitution;
             this.mass = opt.nature.mass || this.mass;
+
+            if(opt.nature.static) {
+                switch (opt.nature.static) {
+                    case 'none': {
+                        this.static = staticType.none;
+                        break;
+                    }
+                    case 'position': {
+                        this.static = staticType.position;
+                        break;
+                    }
+                    case 'total': {
+                        this.static = staticType.total;
+                        break;
+                    }
+                    default: {
+                        this.static = staticType.none;
+                    }
+                }
+            }
+            else {
+                this.static = staticType.none;
+            }
         }
 
         this.collidedFn = opt.collided || (() => {});
@@ -288,7 +308,7 @@ export class Body {
 
         forceManager.clear(this);
 
-        //this.isTimeToSleep(this.linearVel, this.angularVel);
+        //this.isTimeToSleep(this.pos, this.rot);
     }
 
     // 是否需要休眠
@@ -296,19 +316,18 @@ export class Body {
         let motion = Vector.len(lv)*Vector.len(lv) + av*av,
             s = 0;
 
-        if(this.frameMotionListIn10.length >= 100) {
+        if(this.frameMotionListIn10.length >= 20) {
             this.frameMotionListIn10.shift();
         }
         
         this.frameMotionListIn10.push(motion);
 
-        if(this.frameMotionListIn10.length === 100) {
+        if(this.frameMotionListIn10.length === 20) {
             
             s = calcStandardDeviation(this.frameMotionListIn10);
 
-            console.log(s);
+            if(s < 500) {
 
-            if(s < 0.8) {
                 this.state = state.sleep;
             }
             else {
@@ -318,6 +337,14 @@ export class Body {
     }
 
     /**------------------------------更新shape图形----------------- */
+
+    setLinearVel(vel: vector) {
+        this.linearVel = vel;
+    }
+
+    setAngularVel(vel: number) {
+        this.angularVel = vel;
+    }
 
     setPos(pos: vector) {
         let shapeX = this.shape.attr('x'),
