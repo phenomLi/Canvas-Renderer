@@ -1,9 +1,9 @@
 
 
-function init1(c, v) {
+function init1(v) {
     const World1 = new P2.World(document.getElementById("canvas0"), {
-        width: c.offsetWidth,
-        height: c.offsetHeight,
+        size: v.size,
+        offset: v.offset,
         gravity: [0, v.gravityY],
         linearDrag: [0.3, 0],
         angularDrag: 0.1
@@ -26,7 +26,7 @@ function init1(c, v) {
         let r = new World1.body.Rect({
             shape: {
                 pin: [ev.x, ev.y],
-                edge: [Math.floor(Math.random()*50) + 40, Math.floor(Math.random()*50) + 40],
+                edge: [50, 50],
                 color: getRandomColor(),
                 fill: false,
                 zIndex: 1

@@ -1,6 +1,14 @@
 
 function getRandomColor() {
-    return "rgb(" + Math.round(Math.random() * 255) + "," + Math.round(Math.random() * 255) + ',' + Math.round(Math.random() * 10) + ')';
+    let arr = [
+        '#bcd3bb', '#e88f70', 
+        '#edc1a5', '#9dc5c8', 
+        '#e1e8c8', '#7b7c68', 
+        '#e5b5b5', '#f0b489', 
+        '#928ea8', '#bda29a'
+    ];
+
+    return arr[Math.floor(Math.random()*arr.length)];
 }
 
 
@@ -37,7 +45,9 @@ const vue = new Vue({
         gravityX: 0,
         gravityY: 6,
         drag: 0.25,
-        score: 0
+        score: 0,
+        size: [],
+        offset: []
     },
     methods: {
         play() {
@@ -84,9 +94,12 @@ const vue = new Vue({
     mounted() {
         let c = document.getElementById('canvas' + this.curCanvasIndex);
 
-        this.worldInstanceList.push(init1(c, this));
-        this.worldInstanceList.push(init2(c, this));
-        this.worldInstanceList.push(init3(c, this));
+        this.size = [c.offsetWidth, c.offsetHeight];
+        this.offset = [c.offsetLeft, c.offsetTop];
+
+        this.worldInstanceList.push(init1(this));
+        this.worldInstanceList.push(init2(this));
+        this.worldInstanceList.push(init3(this));
 
         this.curWorld = this.worldInstanceList[this.curCanvasIndex];
         this.prevWorld = this.curWorld;

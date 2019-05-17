@@ -42,6 +42,8 @@ export default class Animator {
 
     public id: Symbol;
     private shape: Shape;
+    // 是否已经加入到动画队列
+    private isAdd: boolean;
     private _value: Array<valueInfo>;
     private _duration :number;
     private _delay: number;
@@ -66,6 +68,7 @@ export default class Animator {
     constructor(shape: Shape, config: animationConfig) {
         this.id = Symbol();
         this.shape = shape;
+        this.isAdd = false;
         this.isLoop = false;
         this.animationQueue = [];
         this.animationQueueIndex = 0;
@@ -168,7 +171,10 @@ export default class Animator {
 
             this._onStart();
 
-            this.shape.animationManager.add(this);
+            if(!this.isAdd) {
+                this.shape.animationManager.add(this);
+                this.isAdd = true;
+            }
         }, this._delay);
     }
 

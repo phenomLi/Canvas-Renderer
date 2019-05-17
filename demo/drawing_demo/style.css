@@ -16,7 +16,7 @@ button {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #2bcbba;
+    background-color: #2d91ea;
     width: 120px;
     padding: 10px 0 10px 0;
     color: #fff;
@@ -54,7 +54,7 @@ button {
 }
 
 .nav-item--active {
-    background-color: #2bcbba;
+    background-color: #2d91ea;
     color: #fff;
 }
 
@@ -97,7 +97,7 @@ button {
 }
 
 input {
-    border: 1px solid #2bcbba;
+    border: 1px solid #2d91ea;
     outline: none;
     width: 60px;
     font-size: 18px;
@@ -107,10 +107,3 @@ input {
     padding: 8px;
 }
 
-.score {
-    text-align: center;
-    color: #2bcbba;
-    font-size: 24px;
-    margin-top: 20px;
-    padding: 12px 0 12px 0;
-}

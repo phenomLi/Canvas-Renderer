@@ -21,7 +21,7 @@ const PropertiesManager = {
         this.baseProp.writableProperties = ['x', 'y', 'color', 'fill', 'opacity', 'rotate', 'scale', 'show', 'zIndex', 'lineWidth', 'tag', 'shadow'];
         this.baseProp.readonlyProperties = ['id', 'type', 'center'];
         this.baseProp.animateProperties = ['x', 'y', 'color', 'opacity', 'rotate', 'lineWidth'];
-        this.baseProp.notRePathProperties = ['color', 'fill', 'opacity', 'show', 'lineWidth'];
+        this.baseProp.notRePathProperties = ['color', 'fill', 'opacity', 'show', 'lineWidth', 'shadow'];
         this.baseProp.requiredProperties = ['pin'];
         this.baseProp.readableProperties = [];
 
@@ -105,16 +105,13 @@ const PropertiesManager = {
 
 export default {
     Line: (() => {
-        let baseProp = {};
+        PropertiesManager.init();
 
-        baseProp['writableProperties'] = ['color', 'opacity', 'show', 'zIndex', 'lineWidth', 'range'];
-        baseProp['readonlyProperties'] = ['id', 'type', 'tag'];
-        baseProp['animateProperties'] = [];
-        baseProp['notRePathProperties'] = ['color', 'opacity', 'show', 'lineWidth'];
-        baseProp['requiredProperties'] = ['range'];
-        baseProp['readableProperties'] = ['color', 'opacity', 'show', 'zIndex', 'lineWidth', 'id', 'type', 'tag', 'range'];
+        PropertiesManager['writableProperties']('add', ['range', 'curveness', 'percent']);
+        PropertiesManager['animateProperties']('replace', ['curveness', 'percent']);
+        PropertiesManager['requiredProperties']('replace', ['range']);
 
-        return baseProp;
+        return PropertiesManager.get();
     })(),
     Circle: (() => {
         PropertiesManager.init();

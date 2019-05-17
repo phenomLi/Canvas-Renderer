@@ -1,9 +1,9 @@
 
 
-function init3(c, v) {
+function init3(v) {
     const World3 = new P2.World(document.getElementById("canvas2"), {
-        width: c.offsetWidth,
-        height: c.offsetHeight,
+        size: v.size,
+        offset: v.offset,
         gravity: [0, 0],
         linearDrag: [0, 0],
         angularDrag: 0.0
@@ -11,8 +11,8 @@ function init3(c, v) {
 
     const maxBrickNum = 16,
           row = 7,
-          width = c.offsetWidth,
-          height = c.offsetHeight,
+          width = v.size[0],
+          height = v.size[1],
           brickWidth = width/maxBrickNum,
           brickHeight = 30;
 
@@ -42,7 +42,8 @@ function init3(c, v) {
                 shape: {
                     pin: [i*(brickWidth/2) + j*brickWidth, i*brickHeight],
                     edge: [brickWidth, brickHeight],
-                    color: getRandomColor(),
+                    color: '#928ea8',
+                    shadow: '1 0 0 rgba(0,0,0,0.5)',
                 },
                 nature: {
                     static: 'total',
@@ -75,7 +76,8 @@ function init3(c, v) {
         shape: {
             pin: [width/2, height - 42],
             radius: 20,
-            color: getRandomColor()
+            color: getRandomColor(),
+            zIndex: 1
         },
         nature: {
             restitution: 1
@@ -86,7 +88,7 @@ function init3(c, v) {
 
     World3.bind('mousemove', ev => {
         isMouseInWorld = true;
-        x = ev.x - 150;
+        x = ev.x;
         y = ev.y;
     });
 

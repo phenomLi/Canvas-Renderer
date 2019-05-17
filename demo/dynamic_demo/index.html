@@ -16,7 +16,7 @@
             <li :class="'nav-item ' + (index === curCanvasIndex? 'nav-item--active': '')" v-for="(item, index) in navList" @click="navSelection(index)">{{item}}</li>
         </ul>
         <div class="button-container">
-            <button class="play" @click="play">{{pauseFlag? '暂停': '开始'}}</button>
+            <button class="play" @click="play">{{pauseFlag? '开始': '暂停'}}</button>
             <div v-show="curCanvasIndex===0">
                 <button class="ctrl-button" id="rect">矩形</button>
                 <button class="ctrl-button" id="cir">圆形</button>
