@@ -1,4 +1,4 @@
-import { scale, isConcavePoly } from "../util/util";
+
 
 // [x, y]
 export type vector = Array<number>;

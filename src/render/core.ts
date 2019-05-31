@@ -1,5 +1,5 @@
 import { ShapeType, LayerManager } from './LayerManager';
-import { isInShape, isInPath, arrayDeepCopy, divideConcavePoly, isConcavePoly, getRandomColor } from '../util/util';
+import { isInShape, isInPath, arrayDeepCopy, getRandomColor } from '../util/util';
 import AnimationManager from '../animation/core';
 import { EventSystem, keyBoardEvent } from '../event/core';
 import shapes from './shapes';
@@ -14,8 +14,6 @@ const utils = {
     isInShape,
     isInPath,
     arrayDeepCopy, 
-    divideConcavePoly,
-    isConcavePoly,
     getRandomColor
 }
 
