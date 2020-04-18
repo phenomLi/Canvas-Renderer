@@ -1,11 +1,10 @@
 
 
 module.exports = {
-    entry: './src/P2.ts',
+    entry: './src/Renderer.ts',
     output: {
 		filename: './bundle.js',
-		library: 'P2',
-     	libraryTarget: 'var'
+     	libraryTarget: 'umd'
     },
     resolve: {
 		// 先尝试以ts为后缀的TypeScript源码文件
