@@ -4,13 +4,15 @@
 <br />
 
 ## Getting Start
-#### 初始化 Renderer
+### 初始化 Renderer
 在使用 Renderer 前需要初始化实例，具体方式是传入一个 DOM 容器：
 ```javascript
 let r = new R(document.getElementById('container'));
 ```
 
-#### 在画布中添加元素
+<br />
+
+### 在画布中添加元素
 Renderer 提供了将近 14 种图形类型。以创建一个圆和矩形为例：
 ```javascript
 let circle = new r.shapes.Circle({
@@ -32,8 +34,9 @@ r.append([circle, rect]);
 
 创建了一个圆心在 [300, 200] 位置，半径为 60 像素的圆，和一个中心在 [400, 400] 位置，宽高为 [160, 100]，旋转角度为 45 度的矩形，并将它们添加到画布中。
 
+<br />
 
-#### 修改图形元素属性
+### 修改图形元素属性
 创建了图形元素之后，可以用 shape.attr('attrName') 获取图形的属性，但是如果需要对其进行修改，应该使用 shape.attr('attrName', value) 的形式修改。例子：
 ```javascript
 circle.attr('color', 'red');
@@ -41,8 +44,9 @@ rect.attr('opacity', '0.5');
 ```
 ![](https://github.com/phenomLi/Rendering-Engine/raw/master/images/微信截图_20200418130749.png)
 
+<br />
 
-#### 创建动画
+### 创建动画
 可以使用 r.animation 和 shape.animateTo 的形式创建动画效果，例子：
 ```javascript
 let circleAnimation = new r.animation(circle, {
